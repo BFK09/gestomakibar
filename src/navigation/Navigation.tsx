@@ -58,8 +58,8 @@ export default function Navigation({ nomBoutique, ecran, onChoisir }: Props) {
         {PRINCIPAUX.map((id) => {
           const e = infoEcran(id)
           return (
-            <button key={id} className={ecran === id ? 'actif' : ''} aria-current={ecran === id ? 'page' : undefined} onClick={() => choisir(id)}>
-              <span className="pastille"><e.icone size={22} strokeWidth={ecran === id ? 2.4 : 1.9} /></span>
+            <button key={id} className={`${ecran === id ? 'actif' : ''}${id === 'vente' ? ' centre' : ''}`} aria-current={ecran === id ? 'page' : undefined} onClick={() => choisir(id)}>
+              <span className="pastille"><e.icone size={id === 'vente' ? 28 : 22} strokeWidth={ecran === id || id === 'vente' ? 2.4 : 1.9} /></span>
               <span>{e.court}</span>
             </button>
           )

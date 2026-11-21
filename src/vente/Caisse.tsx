@@ -331,9 +331,13 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
 
       {erreur && <p className="erreurs">{erreur}</p>}
 
-      <div className="pied-reception">
-        <button type="button" onClick={() => { setPanier([]); setPaiements([]); setErreur('') }} disabled={panier.length === 0}>Vider</button>
-        <button className="principal" onClick={valider} disabled={panier.length === 0}>Valider la vente</button>
+      {/* Toujours visible en bas de l'écran, au-dessus du menu : le total et le bouton pour encaisser. */}
+      <div className="pied-caisse">
+        <button type="button" className="vider" onClick={() => { setPanier([]); setPaiements([]); setErreur('') }} disabled={panier.length === 0} aria-label="Vider le panier">Vider</button>
+        <button className="principal valider" onClick={valider} disabled={panier.length === 0}>
+          <span>Valider</span>
+          <strong>{fcfa(total)}</strong>
+        </button>
       </div>
     </div>
   )

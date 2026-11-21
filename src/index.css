@@ -436,3 +436,56 @@ a.bouton { display: inline-flex; align-items: center; padding: 8px 14px; border:
 .livraison { border-top: 1px solid var(--bord); padding: 10px 0; }
 .livraison p { margin: 6px 0; }
 .livraison .boutons input { flex: 1 1 140px; }
+
+/* =====================================================================
+   Style GESTOMAKIBAR : police ronde, gros bouton Caisse, tuiles colorées,
+   total collé en bas. Les couleurs (orange brique) ne changent pas.
+   ===================================================================== */
+:root { font-family: 'Nunito Variable', 'Segoe UI', system-ui, sans-serif; --rayon: 16px; --hauteur-menu: 72px; }
+body { font-size: 1rem; }
+h2 { font-weight: 900; letter-spacing: -0.01em; font-size: 1.5rem; }
+strong, .total-caisse strong { font-weight: 800; }
+button { border-radius: 12px; font-weight: 700; }
+input, select, textarea { border-radius: 12px !important; }
+.carte { border-radius: var(--rayon); }
+
+/* En-tête : dégradé chaud, plus compact */
+.barre { background: linear-gradient(120deg, var(--bleu-fonce, #7c2d12), #b45309); padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: 8px; }
+:root[data-theme='dark'] .barre { background: linear-gradient(120deg, #2a160d, #4a2510); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .barre { background: linear-gradient(120deg, #2a160d, #4a2510); } }
+.barre-titres strong { font-weight: 900; font-size: 1.05rem; }
+
+/* Menu du bas : la Caisse au centre, en gros bouton rond qui dépasse */
+.menu-bas { padding-top: 4px; border-top: none; box-shadow: 0 -6px 20px rgba(16, 24, 40, 0.08); border-radius: 22px 22px 0 0; }
+.menu-bas button { font-weight: 700; font-size: 0.72rem; }
+.menu-bas button.centre { position: relative; color: var(--bleu); }
+.menu-bas button.centre .pastille { width: 64px; height: 64px; margin-top: -30px; border-radius: 999px; background: linear-gradient(145deg, #c2410c, var(--bouton)); color: #fff; box-shadow: 0 8px 18px rgba(154, 52, 18, 0.45), 0 0 0 5px var(--carte); }
+.menu-bas button.centre.actif .pastille { background: linear-gradient(145deg, #ea580c, #9a3412); }
+.menu-bas button.centre:active .pastille { transform: scale(0.94); }
+
+/* Puces de catégorie avec leur couleur */
+.puces button { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.point-cat { width: 9px; height: 9px; border-radius: 999px; background: var(--cat); }
+.puces button.choisi .point-cat { background: #fff; }
+
+/* Tuiles de boissons : plus grandes, bande de couleur par famille */
+.tuiles-boissons { grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 10px; }
+.tuile-boisson { min-height: 98px; padding: 12px 10px 10px 14px; border: 1px solid var(--bord); border-left: 6px solid var(--cat, var(--bleu)); background: linear-gradient(180deg, color-mix(in srgb, var(--cat, #888) 8%, var(--carte)), var(--carte)); box-shadow: var(--ombre); transition: transform .08s; }
+.tuile-boisson:active { transform: scale(0.96); }
+.tuile-boisson:hover, .tuile-boisson:focus, .tuile-boisson:focus-visible { outline: none; border-color: var(--bord); border-left-color: var(--cat, var(--bleu)); }
+.tuile-boisson-nom { font-size: 0.92rem; font-weight: 800; }
+.tuile-boisson-prix { font-size: 0.95rem; font-weight: 900; }
+.pastille-qte { min-width: 28px; height: 28px; font-size: 0.9rem; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+
+/* Caisse : total + Valider toujours visibles, collés au-dessus du menu */
+.caisse .total-caisse { display: none; }
+.pied-caisse { position: sticky; bottom: calc(var(--hauteur-menu) + env(safe-area-inset-bottom) + 30px); z-index: 15; display: grid; grid-template-columns: auto 1fr; gap: 8px; margin-top: 12px; padding: 8px; background: color-mix(in srgb, var(--carte) 92%, transparent); backdrop-filter: blur(10px); border: 1px solid var(--bord); border-radius: 18px; box-shadow: var(--ombre-haute); }
+.pied-caisse .valider { display: flex; justify-content: space-between; align-items: center; min-height: 54px; padding: 8px 18px; font-size: 1rem; border-radius: 14px; }
+.pied-caisse .valider strong { font-size: 1.35rem; font-weight: 900; white-space: nowrap; }
+.pied-caisse .valider span { font-size: 1.1rem; }
+.page:has(.pied-caisse) { padding-bottom: calc(var(--hauteur-menu) + 60px + env(safe-area-inset-bottom)); }
+.pied-caisse .vider { min-height: 54px; border-radius: 14px; }
+@media (min-width: 900px) { .pied-caisse { bottom: 16px; } }
+
+/* Bandeau du serveur plus visible */
+.bandeau-serveur { border-radius: 14px; font-weight: 700; }

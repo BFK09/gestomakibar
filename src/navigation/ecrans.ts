@@ -22,6 +22,7 @@ export const ECRANS: InfoEcran[] = [
 ]
 
 // Les 4 écrans les plus utilisés, toujours visibles dans le menu du bas ; les autres sont dans « Plus ».
-export const PRINCIPAUX: Ecran[] = ['vente', 'tableau', 'cloture', 'clients']
+// Ordre du menu du bas : la Caisse au centre, en gros bouton.
+export const PRINCIPAUX: Ecran[] = ['tableau', 'cloture', 'vente', 'clients']
 
 export const infoEcran = (id: Ecran) => ECRANS.find((e) => e.id === id)!
