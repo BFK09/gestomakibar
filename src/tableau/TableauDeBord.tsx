@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { debutDuJour, etatDuStock, resumePeriode, ventesSeptJours } from '../db/statistiques'
 import { fcfa } from '../outils/format'
+import { bilansJournee, debutJournee } from '../db/cloture'
+import { journeeDe } from '../db/journee'
 
 type Periode = 'jour' | 'semaine' | 'mois'
 const NOMS: Record<Periode, string> = { jour: "Aujourd'hui", semaine: '7 derniers jours', mois: 'Ce mois-ci' }
@@ -20,7 +22,9 @@ export default function TableauDeBord({ onVoirCatalogue }: { onVoirCatalogue: ()
   const resume = useLiveQuery(() => resumePeriode(...bornes(periode)), [periode])
   const jours = useLiveQuery(() => ventesSeptJours(), [])
   const stock = useLiveQuery(() => etatDuStock(), [])
-  if (!resume || !jours || !stock) return <p>Chargement…</p>
+  // Ventes de la journée commerciale en cours, serveur par serveur.
+  const serveurs = useLiveQuery(async () => bilansJournee(journeeDe(new Date(), await debutJournee())), [])
+  if (!resume || !jours || !stock || !serveurs) return <p>Chargement…</p>
 
   const max = Math.max(...jours.map((j) => j.montant), 1)
   const tauxMarge = resume.chiffreAffaires ? Math.round((resume.marge / resume.chiffreAffaires) * 100) : 0
@@ -54,6 +58,20 @@ export default function TableauDeBord({ onVoirCatalogue }: { onVoirCatalogue: ()
         <p className="info">« Crédit » = montant vendu à crédit, pas encore encaissé.</p>
         {resume.remboursements > 0 && <p className="info">Remboursements de crédit reçus sur la période : <strong>{fcfa(resume.remboursements)}</strong></p>}
       </div>
+
+      {serveurs.some((b) => b.tickets > 0) && (
+        <div className="carte">
+          <strong>Serveurs, journée en cours</strong>
+          <table className="tableau-simple">
+            <tbody>
+              {serveurs.filter((b) => b.tickets > 0 || b.especes !== 0).map((b) => (
+                <tr key={b.serveurId}><td>{b.nom} ({b.tickets} ticket{b.tickets > 1 ? 's' : ''})</td><td>{fcfa(b.chiffreAffaires)}</td></tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="info">Espèces encore à remettre : <strong>{fcfa(serveurs.reduce((x, b) => x + b.attendu, 0))}</strong> (voir Clôture).</p>
+        </div>
+      )}
 
       <div className="carte">
         <strong>Ventes des 7 derniers jours</strong>

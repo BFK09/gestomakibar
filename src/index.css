@@ -405,12 +405,12 @@ button svg { vertical-align: -4px; }
 .puces { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
 .puces button { flex: none; min-height: 34px; padding: 4px 12px; border-radius: 999px; font-size: 0.85rem; }
 .puces button.choisi { background: var(--bleu); color: #fff; border-color: var(--bleu); }
-.tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
-.tuile { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; min-height: 84px; padding: 10px 8px; text-align: left; border-radius: var(--rayon); }
-.tuile-nom { font-size: 0.85rem; font-weight: 600; line-height: 1.2; }
-.tuile-prix { font-size: 0.8rem; color: var(--bleu); font-weight: 700; }
-.tuile.sans-prix { opacity: 0.55; }
-.tuile.sans-prix .tuile-prix { color: var(--doux); font-weight: 400; }
+.tuiles-boissons { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.tuile-boisson { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; min-height: 84px; padding: 10px 8px; text-align: left; border-radius: var(--rayon); }
+.tuile-boisson-nom { font-size: 0.85rem; font-weight: 600; line-height: 1.2; }
+.tuile-boisson-prix { font-size: 0.8rem; color: var(--bleu); font-weight: 700; }
+.tuile-boisson.sans-prix { opacity: 0.55; }
+.tuile-boisson.sans-prix .tuile-boisson-prix { color: var(--doux); font-weight: 400; }
 .pastille-qte { position: absolute; top: -6px; right: -6px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: var(--bleu); color: #fff; font-size: 0.8rem; font-weight: 700; display: grid; place-items: center; }
 
 /* ---------- Clôture de caisse ---------- */

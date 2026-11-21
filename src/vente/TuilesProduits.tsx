@@ -24,14 +24,14 @@ export default function TuilesProduits({ articles, categories, quantites, onAjou
           <button key={c.id} className={categorieId === c.id ? 'choisi' : ''} onClick={() => setCategorieId(c.id)}>{c.nom}</button>
         ))}
       </div>
-      <div className="tuiles">
+      <div className="tuiles-boissons">
         {visibles.map((a) => {
           const q = quantites.get(a.id)
           return (
-            <button key={a.id} className={`tuile${a.prixVente === null ? ' sans-prix' : ''}`} onClick={() => onAjouter(a)}>
+            <button key={a.id} className={`tuile-boisson${a.prixVente === null ? ' sans-prix' : ''}`} onClick={() => onAjouter(a)}>
               {q ? <span className="pastille-qte">{q}</span> : null}
-              <span className="tuile-nom">{a.designation}</span>
-              <span className="tuile-prix">{a.prixVente === null ? 'sans prix' : fcfa(a.prixVente)}</span>
+              <span className="tuile-boisson-nom">{a.designation}</span>
+              <span className="tuile-boisson-prix">{a.prixVente === null ? 'sans prix' : fcfa(a.prixVente)}</span>
             </button>
           )
         })}

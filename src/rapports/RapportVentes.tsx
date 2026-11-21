@@ -7,10 +7,11 @@ import { sansAccents } from '../outils/texte'
 import { BoutonPdf } from './Rapports'
 import { bornesPeriode, jourLocal, libellePeriode, NOMS_PERIODES, type Periode } from './periodes'
 
-type Regroupement = 'article' | 'categorie' | 'jour' | 'detail'
+type Regroupement = 'article' | 'categorie' | 'serveur' | 'jour' | 'detail'
 const NOMS_REGROUPEMENTS: Record<Regroupement, string> = {
   article: 'Par produit',
   categorie: 'Par catégorie',
+  serveur: 'Par serveur',
   jour: 'Par jour',
   detail: 'Ligne par ligne',
 }
@@ -43,6 +44,7 @@ export default function RapportVentes({ nomBoutique }: { nomBoutique: string }) 
   const cleDe = (l: LigneRapportVente): [string, string] =>
     regroupement === 'article' ? [l.articleId, `${l.code} ${l.designation}`]
       : regroupement === 'categorie' ? [l.categorieId, nomCategorie.get(l.categorieId) ?? '—']
+        : regroupement === 'serveur' ? [l.serveur || '—', l.serveur || 'Sans serveur']
         : [jourLocal(new Date(l.date)), new Date(l.date).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })]
 
   const groupes = new Map<string, Groupe>()
@@ -76,7 +78,7 @@ export default function RapportVentes({ nomBoutique }: { nomBoutique: string }) 
       largeurs: [40, 12, 16, 16, 16, 10],
       lignes: [
         ...entete,
-        [regroupement === 'article' ? 'Produit' : regroupement === 'categorie' ? 'Catégorie' : 'Jour', 'Quantité', "Chiffre d'affaires", 'Coût', 'Marge', 'Marge %'],
+        [regroupement === 'article' ? 'Produit' : regroupement === 'categorie' ? 'Catégorie' : regroupement === 'serveur' ? 'Serveur' : 'Jour', 'Quantité', "Chiffre d'affaires", 'Coût', 'Marge', 'Marge %'],
         ...liste.map((g) => [g.libelle, g.quantite, g.montant, g.cout, g.montant - g.cout, g.montant ? Math.round(((g.montant - g.cout) / g.montant) * 1000) / 10 : null]),
         ['TOTAL', total.quantite, total.montant, total.cout, total.montant - total.cout, total.montant ? Math.round(((total.montant - total.cout) / total.montant) * 1000) / 10 : null],
       ],
@@ -164,7 +166,7 @@ export default function RapportVentes({ nomBoutique }: { nomBoutique: string }) 
       ) : (
         <div className="table-defilante">
           <table className="table-rapport">
-            <thead><tr><th>{regroupement === 'article' ? 'Produit' : regroupement === 'categorie' ? 'Catégorie' : 'Jour'}</th><th className="nombre">Qté</th><th className="nombre">Chiffre d'affaires</th><th className="nombre">Coût</th><th className="nombre">Marge</th><th className="nombre">%</th></tr></thead>
+            <thead><tr><th>{regroupement === 'article' ? 'Produit' : regroupement === 'categorie' ? 'Catégorie' : regroupement === 'serveur' ? 'Serveur' : 'Jour'}</th><th className="nombre">Qté</th><th className="nombre">Chiffre d'affaires</th><th className="nombre">Coût</th><th className="nombre">Marge</th><th className="nombre">%</th></tr></thead>
             <tbody>
               {liste.map((g) => (
                 <tr key={g.cle}>

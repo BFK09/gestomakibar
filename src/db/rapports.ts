@@ -104,6 +104,7 @@ export interface LigneRapportVente {
   code: string
   designation: string
   categorieId: string
+  serveur: string // nom du serveur qui a vendu (vide pour les anciennes ventes)
   quantite: number
   montant: number
   cout: number
@@ -116,6 +117,7 @@ export async function rapportVentes(debut: string, fin: string) {
   const articles = new Map((await db.articles.toArray()).map((a) => [a.id, a]))
   const encaissements = await db.encaissements.where('venteId').anyOf(ventes.map((v) => v.id)).toArray()
   const modes = await db.modesPaiement.toCollection().sortBy('ordre')
+  const serveurs = new Map((await db.serveurs.toArray()).map((s) => [s.id, s.nom]))
 
   const detail = lignes.map((l): LigneRapportVente => {
     const v = parId.get(l.venteId)!
@@ -128,6 +130,7 @@ export async function rapportVentes(debut: string, fin: string) {
       code: articles.get(l.articleId)?.code ?? '',
       designation: l.designation,
       categorieId: l.categorieId,
+      serveur: v.serveurId ? serveurs.get(v.serveurId) ?? '?' : '',
       quantite: l.quantite,
       montant: l.quantite * l.prixUnitaire,
       cout: l.quantite * l.coutUnitaire,

@@ -6,21 +6,23 @@ import { definirPays, PAYS } from '../outils/pays'
 // Nom, responsable et coordonnées de l'établissement (affichés sur les tickets et les rapports).
 export default function Identite() {
   const boutique = useLiveQuery(() => db.boutique.get('principale'), [])
-  const [s, setS] = useState({ nom: '', responsable: '', telephone: '', adresse: '', pays: 'CI', monnaie: '' })
+  const [s, setS] = useState({ nom: '', responsable: '', telephone: '', adresse: '', pays: 'CI', monnaie: '', debutJournee: '6' })
   const [message, setMessage] = useState('')
   const [erreur, setErreur] = useState('')
 
   useEffect(() => {
-    if (boutique) setS({ nom: boutique.nom, responsable: boutique.responsable, telephone: boutique.telephone ?? '', adresse: boutique.adresse ?? '', pays: boutique.pays ?? 'CI', monnaie: boutique.monnaie ?? '' })
+    if (boutique) setS({ nom: boutique.nom, responsable: boutique.responsable, telephone: boutique.telephone ?? '', adresse: boutique.adresse ?? '', pays: boutique.pays ?? 'CI', monnaie: boutique.monnaie ?? '', debutJournee: String(boutique.debutJournee ?? 6) })
   }, [boutique])
 
   async function enregistrer() {
     setMessage(''); setErreur('')
     if (!s.nom.trim() || !s.responsable.trim()) return setErreur('Le nom et le responsable sont obligatoires.')
+    const heure = Number(s.debutJournee)
+    if (!Number.isInteger(heure) || heure < 0 || heure > 12) return setErreur("L'heure de début de journée doit être un nombre entre 0 et 12.")
     await db.boutique.update('principale', {
       nom: s.nom.trim(), responsable: s.responsable.trim(),
       telephone: s.telephone.trim() || undefined, adresse: s.adresse.trim() || undefined,
-      pays: s.pays, monnaie: s.monnaie.trim() || undefined,
+      pays: s.pays, monnaie: s.monnaie.trim() || undefined, debutJournee: heure,
     })
     definirPays(s.pays, s.monnaie)
     setMessage('Informations enregistrées.')
@@ -42,6 +44,12 @@ export default function Identite() {
         </label>
         <label>Monnaie affichée<input value={s.monnaie} placeholder={PAYS.find((p) => p.code === s.pays)?.monnaie} onChange={(e) => setS({ ...s, monnaie: e.target.value })} /></label>
       </div>
+      <label>Début de la journée (heure)
+        <select value={s.debutJournee} onChange={(e) => setS({ ...s, debutJournee: e.target.value })}>
+          {Array.from({ length: 13 }, (_, h) => <option key={h} value={h}>{h} h</option>)}
+        </select>
+      </label>
+      <p className="info">La journée commerciale va de cette heure jusqu'au lendemain même heure : avec 6 h, une vente faite à 2 h du matin compte dans la soirée de la veille (clôture de caisse).</p>
       <p className="info">Le pays sert pour WhatsApp : un numéro tapé sans indicatif reçoit celui du pays. Un client d'un autre pays : écris son numéro avec + (ex. +33 6 12 34 56 78). Laisse « Monnaie » vide pour celle du pays. Les montants sont en nombres entiers (sans centimes).</p>
       <div className="boutons gauche"><button className="principal" onClick={enregistrer}>Enregistrer</button></div>
     </div>
