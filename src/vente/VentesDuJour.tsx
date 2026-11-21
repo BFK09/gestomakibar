@@ -14,7 +14,8 @@ export default function VentesDuJour({ onRefaire }: { onRefaire: (lignes: LigneP
     const ventes = await db.ventes.where('date').aboveOrEqual(depuis).reverse().sortBy('date')
     const encaissements = await db.encaissements.where('date').aboveOrEqual(depuis).toArray()
     const modes = await db.modesPaiement.toCollection().sortBy('ordre')
-    return { ventes, encaissements, modes }
+    const serveurs = new Map((await db.serveurs.toArray()).map((x) => [x.id, x.nom]))
+    return { ventes, encaissements, modes, serveurs }
   }, [])
   if (!d) return <p>Chargement…</p>
   if (ouvert) return (
@@ -47,6 +48,7 @@ export default function VentesDuJour({ onRefaire }: { onRefaire: (lignes: LigneP
                 <span className="code">n° {v.numero}</span>
                 <span className="nom">
                   {new Date(v.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  {v.serveurId && <small>{d.serveurs.get(v.serveurId)}{v.table ? ` · table ${v.table}` : ''}</small>}
                   {v.annuleVenteId && <small>Annulation du n° {numeros.get(v.annuleVenteId) ?? '?'}</small>}
                   {v.retourVenteId && <small>Retour sur le n° {numeros.get(v.retourVenteId) ?? '?'}</small>}
                   {annulees.has(v.id) && <small>Annulé</small>}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/base'
-import type { Article } from '../db/types'
+import type { Article, Serveur } from '../db/types'
 import { stockParArticle } from '../db/stock'
 import { enregistrerVente } from '../db/vente'
 import { fcfa, lireEntier } from '../outils/format'
@@ -10,6 +10,8 @@ import { articleScanne, texteRecherche } from '../outils/codeBarre'
 import ScanCamera from '../scan/ScanCamera'
 import { ScanBarcode } from 'lucide-react'
 import Ticket from './Ticket'
+import ChoixServeur from './ChoixServeur'
+import TuilesProduits from './TuilesProduits'
 
 export interface LignePanier { article: Article; quantite: number }
 interface PaiementSaisi { modePaiementId: string; montant: string }
@@ -17,9 +19,14 @@ interface PaiementSaisi { modePaiementId: string; montant: string }
 interface Props {
   panierDepart: LignePanier[] // vide, ou les articles d'un ticket annulé à refaire
   onRefaire: (lignes: LignePanier[]) => void
+  onAllerAuxServeurs: () => void
 }
 
-export default function Caisse({ panierDepart, onRefaire }: Props) {
+export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: Props) {
+  // Le serveur qui encaisse. L'appareil du comptoir est partagé : après chaque vente,
+  // on redemande qui encaisse, pour que chaque vente soit au bon nom.
+  const [serveur, setServeur] = useState<Serveur | null>(null)
+  const [table, setTable] = useState('')
   const [recherche, setRecherche] = useState('')
   const [scan, setScan] = useState(false)
   const [erreurScan, setErreurScan] = useState('')
@@ -35,10 +42,15 @@ export default function Caisse({ panierDepart, onRefaire }: Props) {
   const modes = useLiveQuery(() => db.modesPaiement.filter((m) => m.actif).sortBy('ordre'), [])
   const clients = useLiveQuery(() => db.clients.orderBy('nom').toArray(), [])
   const stocks = useLiveQuery(() => stockParArticle(), [])
-  if (!articles || !modes || !clients || !stocks) return <p>Chargement…</p>
+  const serveurs = useLiveQuery(() => db.serveurs.orderBy('nom').filter((x) => x.actif).toArray(), [])
+  const categories = useLiveQuery(() => db.categories.orderBy('nom').toArray(), [])
+  if (!articles || !modes || !clients || !stocks || !serveurs || !categories) return <p>Chargement…</p>
 
   // Après une vente : on affiche le ticket, puis on repart sur un panier vide.
   if (ticketId) return <Ticket venteId={ticketId} onNouvelleVente={() => setTicketId(null)} onRefaire={onRefaire} />
+
+  // Avant de vendre : qui encaisse ?
+  if (!serveur) return <ChoixServeur serveurs={serveurs} onChoisir={setServeur} onAllerAuxServeurs={onAllerAuxServeurs} />
 
   const especes = modes.find((m) => m.nature === 'especes')
   const credit = modes.find((m) => m.nature === 'credit')
@@ -61,7 +73,7 @@ export default function Caisse({ panierDepart, onRefaire }: Props) {
 
   function ajouter(a: Article) {
     if (a.prixVente === null) {
-      setErreur(`${a.code} n'a pas de prix de vente : saisis-le d'abord dans le Catalogue.`)
+      setErreur(`${a.code} n'a pas de prix de vente : saisis-le d'abord dans Produits.`)
       return
     }
     setErreur('')
@@ -108,8 +120,11 @@ export default function Caisse({ panierDepart, onRefaire }: Props) {
         paiements: paiementsEffectifs.map((p) => ({ modePaiementId: p.modePaiementId, montant: lireEntier(p.montant) || 0 })),
         clientNom: client,
         clientTelephone: telephone,
+        serveurId: serveur!.id,
+        table,
       })
-      setPanier([]); setPaiements([]); setRecu(''); setClient(''); setTelephone('')
+      setPanier([]); setPaiements([]); setRecu(''); setClient(''); setTelephone(''); setTable('')
+      setServeur(null)
       setTicketId(id)
     } catch (e) {
       setErreur((e as Error).message)
@@ -118,8 +133,20 @@ export default function Caisse({ panierDepart, onRefaire }: Props) {
 
   return (
     <div className="caisse">
+      <div className="bandeau-serveur">
+        <span>Serveur : <strong>{serveur.nom}</strong></span>
+        <button type="button" onClick={() => setServeur(null)}>Changer</button>
+      </div>
+
+      <TuilesProduits
+        articles={articles}
+        categories={categories}
+        quantites={new Map(panier.map((l) => [l.article.id, l.quantite]))}
+        onAjouter={ajouter}
+      />
+
       <label className="recherche-article">
-        Ajouter un article
+        Chercher une boisson
         <span className="avec-scan">
           <input type="search" value={recherche} onChange={(e) => { setRecherche(e.target.value); setErreurScan('') }} placeholder="Tape ou scanne un code, ou un nom…" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const a = articleScanne(articles!, recherche, suggestions); if (a) ajouter(a); else if (recherche.trim()) setErreurScan(`Aucun article ne correspond à « ${recherche.trim()} ».`) } }} />
           <button type="button" className="bouton-scan" onClick={() => setScan(true)} aria-label="Scanner avec la caméra"><ScanBarcode size={20} /></button>
@@ -152,7 +179,7 @@ export default function Caisse({ panierDepart, onRefaire }: Props) {
 
 
       {panierDepart.length > 0 && panier === panierDepart && (
-        <p className="succes">Ticket annulé. Ses articles sont remis dans le panier : corrige-les puis valide la nouvelle vente.</p>
+        <p className="succes">Ticket annulé. Ses boissons sont remises dans le panier : corrige-les puis valide la nouvelle vente.</p>
       )}
 
       {panier.length === 0 ? (
@@ -209,6 +236,11 @@ export default function Caisse({ panierDepart, onRefaire }: Props) {
                 : <span className="alerte">Il manque {fcfa(-monnaie)}</span>)}
             </label>
           )}
+
+          <label className="recu">
+            Table (facultatif)
+            <input value={table} onChange={(e) => setTable(e.target.value)} placeholder="ex. 4, terrasse, VIP…" />
+          </label>
 
           <div className="deux">
             <label>

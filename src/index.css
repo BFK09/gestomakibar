@@ -314,12 +314,12 @@ h2 { font-size: 1.35rem; letter-spacing: -0.01em; color: var(--texte); }
 button { border-radius: 10px; min-height: 40px; transition: background 0.15s, border-color 0.15s, transform 0.05s; }
 button:active:not(:disabled) { transform: scale(0.98); }
 button:hover:not(:disabled):not(.principal):not(.lien-bouton) { border-color: #c5ced8; }
-button.principal { font-weight: 600; box-shadow: 0 1px 2px rgba(31, 95, 139, 0.3); }
+button.principal { font-weight: 600; box-shadow: 0 1px 2px rgba(154, 52, 18, 0.3); }
 button.principal:hover:not(:disabled) { filter: brightness(1.1); }
 button.danger:hover:not(:disabled) { background: #fef3f2; }
 input, select, textarea { border-radius: 10px; min-height: 42px; border-color: var(--champ-bord); transition: border-color 0.15s, box-shadow 0.15s; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--bleu); box-shadow: 0 0 0 3px rgba(154, 52, 18, 0.15); }
-button:focus-visible { outline: 3px solid rgba(31, 95, 139, 0.35); outline-offset: 2px; }
+button:focus-visible { outline: 3px solid rgba(154, 52, 18, 0.35); outline-offset: 2px; }
 input[type='checkbox'] { min-height: 0; accent-color: var(--bleu); }
 
 .carte, .liste-articles, .panier, .paiements, .tuile, .resume-jour div, .resume-ventes > div, .liste-inventaire, .liste-choix, .entete-document, .table-defilante, .suggestions, .lignes-reception li {
@@ -392,3 +392,23 @@ button svg { vertical-align: -4px; }
 .bientot { align-items: center; text-align: center; color: var(--doux); }
 .bientot svg { color: var(--bleu); }
 .bientot p { margin: 0; }
+
+/* ---------- Caisse du maquis : choix du serveur et tuiles de boissons ---------- */
+.choix-serveur { align-items: stretch; }
+.choix-serveur p { margin: 0; }
+.grille-serveurs { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.grille-serveurs button { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; min-height: 88px; font-weight: 600; }
+.grille-serveurs svg { color: var(--bleu); }
+.code-serveur { font-size: 1.6rem; letter-spacing: 0.5em; text-align: center; max-width: 200px; align-self: center; }
+.bandeau-serveur { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--bleu-pale); color: var(--bleu); border-radius: var(--rayon); padding: 8px 12px; }
+.bandeau-serveur button { min-height: 34px; padding: 4px 12px; }
+.puces { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.puces button { flex: none; min-height: 34px; padding: 4px 12px; border-radius: 999px; font-size: 0.85rem; }
+.puces button.choisi { background: var(--bleu); color: #fff; border-color: var(--bleu); }
+.tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.tuile { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; min-height: 84px; padding: 10px 8px; text-align: left; border-radius: var(--rayon); }
+.tuile-nom { font-size: 0.85rem; font-weight: 600; line-height: 1.2; }
+.tuile-prix { font-size: 0.8rem; color: var(--bleu); font-weight: 700; }
+.tuile.sans-prix { opacity: 0.55; }
+.tuile.sans-prix .tuile-prix { color: var(--doux); font-weight: 400; }
+.pastille-qte { position: absolute; top: -6px; right: -6px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: var(--bleu); color: #fff; font-size: 0.8rem; font-weight: 700; display: grid; place-items: center; }

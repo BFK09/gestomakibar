@@ -13,6 +13,7 @@ import Rapports from './rapports/Rapports'
 import Clients from './clients/Clients'
 import Parametres from './parametres/Parametres'
 import BientotDisponible from './commun/BientotDisponible'
+import Serveurs from './serveurs/Serveurs'
 import Navigation from './navigation/Navigation'
 import { definirPays } from './outils/pays'
 import type { Ecran } from './navigation/ecrans'
@@ -36,12 +37,12 @@ function App() {
       <main className="page" key={`${ecran}-${visite}`}>
         {ecran !== 'sauvegarde' && ecran !== 'rapports' && <RappelSauvegarde onOuvrir={() => setEcran('sauvegarde')} />}
         {ecran === 'tableau' && <TableauDeBord onVoirCatalogue={() => setEcran('catalogue')} />}
-        {ecran === 'vente' && <Vente />}
+        {ecran === 'vente' && <Vente onAllerAuxServeurs={() => setEcran('serveurs')} />}
         {ecran === 'catalogue' && <Catalogue />}
         {ecran === 'reception' && <Reception />}
         {ecran === 'inventaire' && <Stock />}
         {ecran === 'clients' && <Clients />}
-        {ecran === 'serveurs' && <BientotDisponible titre="Serveurs" etape="étape 3" contenu="Ici tu créeras la liste de tes serveurs, avec un code à 4 chiffres pour chacun. À la caisse, chaque vente sera notée au nom du serveur." />}
+        {ecran === 'serveurs' && <Serveurs />}
         {ecran === 'cloture' && <BientotDisponible titre="Clôture de caisse" etape="étape 4" contenu="En fin de service : pour chaque serveur, l'argent attendu, l'argent remis et l'écart." />}
         {ecran === 'rapports' && <Rapports />}
         {ecran === 'sauvegarde' && <Sauvegarde />}

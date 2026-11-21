@@ -29,16 +29,17 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
     const modes = new Map((await db.modesPaiement.toArray()).map((m) => [m.id, m.nom]))
     const boutique = await db.boutique.get('principale')
     const client = vente?.clientId ? await db.clients.get(vente.clientId) : undefined
+    const serveur = vente?.serveurId ? await db.serveurs.get(vente.serveurId) : undefined
     // Liens entre un ticket et son annulation, dans les deux sens.
     const annulePar = await db.ventes.where('annuleVenteId').equals(venteId).first()
     const original = vente?.annuleVenteId ? await db.ventes.get(vente.annuleVenteId) : vente?.retourVenteId ? await db.ventes.get(vente.retourVenteId) : undefined
     const retours = await db.ventes.where('retourVenteId').equals(venteId).toArray()
     const dejaRetourne = await quantitesRetournees(venteId)
     const tousModes = await db.modesPaiement.toCollection().sortBy('ordre')
-    return { vente, lignes, encaissements, modes, client, annulePar, original, boutique, retours, dejaRetourne, tousModes }
+    return { vente, lignes, encaissements, modes, client, serveur, annulePar, original, boutique, retours, dejaRetourne, tousModes }
   }, [venteId])
   if (!d?.vente) return <p>Chargement…</p>
-  const { vente, lignes, encaissements, modes, client, annulePar, original, boutique, retours, dejaRetourne, tousModes } = d
+  const { vente, lignes, encaissements, modes, client, serveur, annulePar, original, boutique, retours, dejaRetourne, tousModes } = d
   const estAnnulation = !!vente.annuleVenteId
   const estRetour = !!vente.retourVenteId
   const peutRetourner = !estAnnulation && !estRetour && !annulePar
@@ -66,6 +67,7 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
       `*${boutique?.nom ?? 'Maquis'}*`,
       estAnnulation ? `ANNULATION du ticket n° ${original?.numero}` : estRetour ? `RETOUR sur le ticket n° ${original?.numero}` : '',
       `Ticket n° ${vente!.numero} du ${new Date(vente!.date).toLocaleString('fr-FR')}`,
+      serveur ? `Servi par : ${serveur.nom}${vente!.table ? ` · Table ${vente!.table}` : ''}` : '',
       client ? `Client : ${client.nom}` : '',
       '',
       ...lignes.map((x) => `${x.designation}\n   ${x.quantite} × ${fcfa(x.prixUnitaire)} = ${fcfa(x.quantite * x.prixUnitaire)}`),
@@ -104,6 +106,7 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
         {estAnnulation && <p className="ticket-annulation">ANNULATION du ticket n° {original?.numero}</p>}
         {estRetour && <p className="ticket-annulation">RETOUR sur le ticket n° {original?.numero}</p>}
         <p>Ticket n° {vente.numero}<br />{new Date(vente.date).toLocaleString('fr-FR')}</p>
+        {serveur && <p>Servi par : {serveur.nom}{vente.table && <> · Table {vente.table}</>}</p>}
         {client && <p>Client : {client.nom}</p>}
         <table>
           <tbody>
