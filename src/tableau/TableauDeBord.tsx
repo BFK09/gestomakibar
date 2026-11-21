@@ -53,11 +53,11 @@ export default function TableauDeBord({ onVoirCatalogue }: { onVoirCatalogue: ()
         <table className="tableau-simple">
           <tbody>
             {resume.parMode.map((m) => (
-              <tr key={m.nom}><td>{m.nom}{m.remboursements > 0 && <small> (dont {fcfa(m.remboursements)} de crédits remboursés)</small>}</td><td>{fcfa(m.montant)}</td></tr>
+              <tr key={m.nom}><td>{m.nom}{m.remboursements > 0 && <small> (dont {fcfa(m.remboursements)} de crédits remboursés)</small>}{m.consignes !== 0 && <small> ({m.consignes > 0 ? 'dont' : 'moins'} {fcfa(Math.abs(m.consignes))} de consignes)</small>}</td><td>{fcfa(m.montant)}</td></tr>
             ))}
           </tbody>
         </table>
-        <p className="info">Ventes et crédits remboursés, comme à la clôture de caisse. « Crédit » = montant vendu à crédit, pas encore encaissé.{resume.remboursements > 0 && <> Crédits remboursés sur la période : <strong>{fcfa(resume.remboursements)}</strong>.</>}</p>
+        <p className="info">Ventes, crédits remboursés et consignes, comme à la clôture de caisse. « Crédit » = montant vendu à crédit, pas encore encaissé.{resume.remboursements > 0 && <> Crédits remboursés sur la période : <strong>{fcfa(resume.remboursements)}</strong>.</>}</p>
       </div>
 
       {serveurs.some((b) => b.tickets > 0) && (

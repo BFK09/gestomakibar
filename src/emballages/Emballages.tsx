@@ -31,12 +31,14 @@ export default function Emballages() {
   const fournisseurs = useLiveQuery(() => db.fournisseurs.orderBy('nom').toArray(), [])
   const clients = useLiveQuery(() => db.clients.orderBy('nom').toArray(), [])
   const historique = useLiveQuery(() => historiqueEmballages(), [])
+  const modes = useLiveQuery(() => db.modesPaiement.filter((m) => m.actif && m.nature !== 'credit').sortBy('ordre'), [])
+  const serveurs = useLiveQuery(() => db.serveurs.orderBy('nom').filter((s) => s.actif).toArray(), [])
   const rattaches = useLiveQuery(() => db.articles.filter((a) => !!a.emballageId).count(), [])
   const [edition, setEdition] = useState<EditionType | null>(null)
-  const [saisie, setSaisie] = useState({ nature: 'rendu_fournisseur', emballageId: '', quantite: '', tiers: '', montant: '', note: '' })
+  const [saisie, setSaisie] = useState({ nature: 'rendu_fournisseur', emballageId: '', quantite: '', tiers: '', montant: '', note: '', modeId: '', serveurId: '' })
   const [message, setMessage] = useState('')
   const [erreur, setErreur] = useState('')
-  if (!soldes || !emballages || !fournisseurs || !clients || !historique || rattaches === undefined) return <p>Chargement…</p>
+  if (!modes || !serveurs || !soldes || !emballages || !fournisseurs || !clients || !historique || rattaches === undefined) return <p>Chargement…</p>
 
   async function preparer() {
     setErreur(''); setMessage('')
@@ -68,7 +70,7 @@ export default function Emballages() {
         if (!saisie.tiers) return setErreur(cote === 'client' ? 'Choisis le client.' : 'Choisis le fournisseur.')
         await soldeDeDepart(saisie.emballageId, q, tiers, saisie.note)
       } else {
-        await enregistrerMouvementEmballage({ nature: saisie.nature as SaisieEmballage['nature'], emballageId: saisie.emballageId, quantite: q, montant: avecMontant ? montant ?? undefined : undefined, note: saisie.note, ...tiers })
+        await enregistrerMouvementEmballage({ nature: saisie.nature as SaisieEmballage['nature'], emballageId: saisie.emballageId, quantite: q, montant: avecMontant ? montant ?? undefined : undefined, note: saisie.note, modePaiementId: saisie.modeId || modes!.find((m) => m.nature === 'especes')?.id, serveurId: saisie.serveurId || undefined, ...tiers })
       }
       setMessage(`Enregistré : ${choix.libelle.toLowerCase()}, ${q} ${emballages!.find((e) => e.id === saisie.emballageId)?.nom}.`)
       setSaisie({ ...saisie, quantite: '', montant: '', note: '' })
@@ -167,6 +169,24 @@ export default function Emballages() {
                 placeholder={(() => { const c = consigneDe(saisie.emballageId); const q = lireEntier(saisie.quantite); return c && q ? String(c * q) : '' })()} />
             </label>
           )}
+          {avecMontant && (
+            <div className="deux">
+              <label>Payé en
+                <select value={saisie.modeId} onChange={(e) => setSaisie({ ...saisie, modeId: e.target.value })}>
+                  {modes.map((m) => <option key={m.id} value={m.id}>{m.nom}</option>)}
+                </select>
+              </label>
+              {serveurs.length > 0 && (
+                <label>{saisie.nature === 'consigne_client' ? "Reçu par" : 'Sorti de la caisse de'}
+                  <select value={saisie.serveurId} onChange={(e) => setSaisie({ ...saisie, serveurId: e.target.value })}>
+                    <option value="">Choisir…</option>
+                    {serveurs.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
+                  </select>
+                </label>
+              )}
+            </div>
+          )}
+          {avecMontant && <p className="info">Cet argent compte dans la clôture de caisse de ce serveur.</p>}
           <label>Remarque (facultatif)<input value={saisie.note} onChange={(e) => setSaisie({ ...saisie, note: e.target.value })} /></label>
           <div className="boutons gauche"><button className="principal" onClick={validerMouvement}>Enregistrer</button></div>
           <p className="info">Les casiers pleins livrés et les vides rendus au livreur se notent dans Réception ; ceux qu'un client emporte, dans la Caisse.</p>

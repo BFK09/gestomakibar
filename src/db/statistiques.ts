@@ -9,7 +9,7 @@ export interface Resume {
   tickets: number // tickets valides (ni annulés, ni contre-tickets)
   panierMoyen: number
   // Argent reçu par mode, comme à la clôture : ventes + crédits remboursés pendant la période.
-  parMode: { nom: string; montant: number; remboursements: number }[]
+  parMode: { nom: string; montant: number; remboursements: number; consignes: number }[]
   remboursements: number // dettes de clients encaissées pendant la période (déjà comprises dans parMode)
   meilleurs: { designation: string; quantite: number; montant: number }[]
 }
@@ -23,6 +23,7 @@ export async function resumePeriode(debut: string, fin: string): Promise<Resume>
   const modes = await db.modesPaiement.toCollection().sortBy('ordre')
   const rembourses = await db.encaissements.where('date').between(debut, fin, true, false).filter((e) => e.type === 'remboursement_credit').toArray()
   const remboursements = rembourses.reduce((s, e) => s + e.montant, 0)
+  const consignes = await db.encaissements.where('date').between(debut, fin, true, false).filter((e) => e.type === 'consigne').toArray()
 
   // Un contre-ticket a des quantités négatives : en additionnant tout, l'annulation s'efface d'elle-même.
   const chiffreAffaires = ventes.reduce((s, v) => s + v.total, 0)
@@ -46,7 +47,8 @@ export async function resumePeriode(debut: string, fin: string): Promise<Resume>
     panierMoyen: tickets ? Math.round(chiffreAffaires / tickets) : 0,
     parMode: modes.map((m) => {
       const r = rembourses.filter((e) => e.modePaiementId === m.id).reduce((s, e) => s + e.montant, 0)
-      return { nom: m.nom, montant: encaissements.filter((e) => e.modePaiementId === m.id).reduce((s, e) => s + e.montant, 0) + r, remboursements: r }
+      const c = consignes.filter((e) => e.modePaiementId === m.id).reduce((s, e) => s + e.montant, 0)
+      return { nom: m.nom, montant: encaissements.filter((e) => e.modePaiementId === m.id).reduce((s, e) => s + e.montant, 0) + r + c, remboursements: r, consignes: c }
     }),
     meilleurs,
     remboursements,

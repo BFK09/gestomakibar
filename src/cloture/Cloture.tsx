@@ -28,7 +28,7 @@ export default function Cloture() {
       ...bilans.map((b) => {
         const remis = b.clotures.reduce((x, c) => x + c.remis, 0)
         const ecart = b.clotures.reduce((x, c) => x + c.ecart, 0)
-        return `*${b.nom}* : ${b.tickets} ticket(s), CA ${fcfa(b.chiffreAffaires)}\n   Espèces attendues ${fcfa(b.especes)}, remises ${fcfa(remis)}${ecart ? `, écart ${fcfa(ecart)}` : ''}${b.attendu ? ` (reste à clôturer ${fcfa(b.attendu)})` : ''}\n   Mobile money ${fcfa(b.mobileMoney)} · Crédit ${fcfa(b.credit)}${b.remboursements ? `\n   Dont crédits remboursés ${fcfa(b.remboursements)}` : ''}`
+        return `*${b.nom}* : ${b.tickets} ticket(s), CA ${fcfa(b.chiffreAffaires)}\n   Espèces attendues ${fcfa(b.especes)}, remises ${fcfa(remis)}${ecart ? `, écart ${fcfa(ecart)}` : ''}${b.attendu ? ` (reste à clôturer ${fcfa(b.attendu)})` : ''}\n   Mobile money ${fcfa(b.mobileMoney)} · Crédit ${fcfa(b.credit)}${b.remboursements ? `\n   Dont crédits remboursés ${fcfa(b.remboursements)}` : ''}${b.consignes ? `\n   Consignes ${fcfa(b.consignes)}` : ''}`
       }),
       '',
       `Total CA : ${fcfa(total((b) => b.chiffreAffaires))}`,
@@ -94,6 +94,7 @@ function CarteServeur({ journee, bilan: b }: { journee: string; bilan: BilanServ
         <div><small>Crédit</small><strong>{fcfa(b.credit)}</strong></div>
       </div>
       {b.remboursements > 0 && <p className="info">Dont {fcfa(b.remboursements)} de crédits remboursés par des clients.</p>}
+      {b.consignes !== 0 && <p className="info">{b.consignes > 0 ? `Dont ${fcfa(b.consignes)} de consignes d'emballages reçues.` : `Moins ${fcfa(-b.consignes)} de consignes payées au fournisseur.`}</p>}
 
       {b.clotures.map((c) => (
         <p key={c.id} className={c.ecart < 0 ? 'alerte' : 'succes'}>

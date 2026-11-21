@@ -12,6 +12,7 @@ export interface BilanServeur {
   mobileMoney: number
   credit: number // vendu à crédit (argent que le serveur n'a pas reçu)
   remboursements: number // crédits remboursés reçus par ce serveur (déjà compris dans especes / mobileMoney)
+  consignes: number // consignes d'emballages reçues (+) ou payées au fournisseur (−), déjà comprises dans especes / mobileMoney
   dejaCloture: number // espèces déjà comptées dans une clôture précédente de la même journée
   attendu: number // espèces qu'il doit encore remettre = especes − dejaCloture
   clotures: Cloture[]
@@ -52,6 +53,7 @@ export async function bilansJournee(journee: string): Promise<BilanServeur[]> {
       mobileMoney: somme('mobile_money'),
       credit: somme('credit'),
       remboursements: sesEnc.filter((e) => e.type === 'remboursement_credit').reduce((x, e) => x + e.montant, 0),
+      consignes: sesEnc.filter((e) => e.type === 'consigne').reduce((x, e) => x + e.montant, 0),
       dejaCloture,
       attendu: especes - dejaCloture,
       clotures: sesClotures,

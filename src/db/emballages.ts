@@ -126,6 +126,9 @@ export interface SaisieEmballage {
   clientId?: string
   montant?: number
   note?: string
+  // Consigne payée : comment, et par quel serveur l'argent est reçu ou sorti (pour la clôture de caisse).
+  modePaiementId?: string
+  serveurId?: string
 }
 
 export async function enregistrerMouvementEmballage(s: SaisieEmballage) {
@@ -139,7 +142,23 @@ export async function enregistrerMouvementEmballage(s: SaisieEmballage) {
   const m: MouvementEmballage = s.nature === 'ajustement'
     ? { id: nouvelId(), emballageId: s.emballageId, nature: 'ajustement', possession: s.quantite, du: 0, ...base }
     : mouvement(s.nature, s.emballageId, s.quantite, base)
-  await db.mouvementsEmballage.add(m)
+  const consigne = (s.nature === 'consigne_client' || s.nature === 'consigne_fournisseur') && (s.montant ?? 0) > 0
+  await db.transaction('rw', [db.mouvementsEmballage, db.encaissements, db.modesPaiement, db.serveurs], async () => {
+    if (consigne) {
+      // L'argent de la consigne passe par la caisse : il compte dans la clôture du serveur choisi.
+      const mode = s.modePaiementId ? await db.modesPaiement.get(s.modePaiementId) : undefined
+      if (!mode || mode.nature === 'credit') throw new Error("Choisis comment la consigne est payée (espèces, mobile money…).")
+      if ((await db.serveurs.filter((x) => x.actif).count()) > 0 && !s.serveurId) {
+        throw new Error(s.nature === 'consigne_client' ? "Choisis qui reçoit l'argent (il le remettra à la clôture)." : "Choisis qui sort l'argent de sa caisse.")
+      }
+      await db.encaissements.add({
+        id: nouvelId(), date, type: 'consigne', modePaiementId: mode.id,
+        montant: s.nature === 'consigne_client' ? s.montant! : -s.montant!,
+        clientId: s.clientId, fournisseurId: s.fournisseurId, serveurId: s.serveurId,
+      })
+    }
+    await db.mouvementsEmballage.add(m)
+  })
 }
 
 // Solde de départ envers un fournisseur ou d'un client (emballages déjà dus le jour où l'on commence).

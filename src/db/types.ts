@@ -129,16 +129,18 @@ export interface LigneVente {
 // Argent reçu ou rendu. Un ticket peut avoir plusieurs encaissements (paiement partagé).
 // - paiement : part d'un ticket (si le mode est « crédit », c'est une dette du client) ;
 // - remboursement_credit : le client règle une partie de sa dette (sans ticket) ;
-// - rendu : argent rendu lors de l'annulation d'un ticket.
+// - rendu : argent rendu lors de l'annulation d'un ticket ;
+// - consigne : consigne d'emballages payée par un client (+) ou payée au fournisseur avec l'argent de la caisse (−).
 export interface Encaissement {
   id: string
   date: string
-  type: 'paiement' | 'remboursement_credit' | 'rendu'
+  type: 'paiement' | 'remboursement_credit' | 'rendu' | 'consigne'
   modePaiementId: string
   montant: number
   venteId?: string
   clientId?: string
   serveurId?: string // le serveur qui a reçu (ou rendu) l'argent, pour la clôture de caisse
+  fournisseurId?: string // consigne payée à un fournisseur
 }
 
 export interface Achat {
