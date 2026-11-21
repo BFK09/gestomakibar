@@ -40,7 +40,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "apk-${{ github.run_number }}" apk/GESTOLIBR.apk \
-            --title "GESTOLIBR Android, version 1.0.${{ github.run_number }}" \
-            --notes "APK Android de GESTOLIBR. Il ouvre https://bfk09.github.io/gestolibr/ comme une application. À installer sur le téléphone (autoriser l'installation depuis cette source)." \
+          gh release create "apk-${{ github.run_number }}" apk/GESTOMAKIBAR.apk \
+            --title "GESTOMAKIBAR Android, version 1.0.${{ github.run_number }}" \
+            --notes "APK Android de GESTOMAKIBAR. Il ouvre https://bfk09.github.io/gestomakibar/ comme une application. À installer sur le téléphone (autoriser l'installation depuis cette source)." \
             --latest

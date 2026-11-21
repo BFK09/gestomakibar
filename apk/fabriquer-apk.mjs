@@ -5,16 +5,16 @@ import { AndroidSdkTools, Config, ConsoleLog, GradleWrapper, JdkHelper, KeyTool,
 import fs from 'node:fs'
 import path from 'node:path'
 
-const SITE = process.env.SITE_URL ?? 'https://bfk09.github.io/gestolibr/'
+const SITE = process.env.SITE_URL ?? 'https://bfk09.github.io/gestomakibar/'
 const dossier = path.resolve('apk/projet-android')
-const cle = { path: path.resolve('apk/cle.keystore'), alias: 'gestolibr', password: process.env.MOT_DE_PASSE_CLE, keypassword: process.env.MOT_DE_PASSE_CLE }
+const cle = { path: path.resolve('apk/cle.keystore'), alias: 'gestomakibar', password: process.env.MOT_DE_PASSE_CLE, keypassword: process.env.MOT_DE_PASSE_CLE }
 const log = new ConsoleLog('apk')
 
 // 1. Lire le manifeste du site (nom, couleurs, icônes) pour décrire l'application Android.
 const twa = await TwaManifest.fromWebManifest(new URL('manifest.webmanifest', SITE).toString())
-twa.packageId = 'ci.bfktech.gestolibr'
-twa.name = 'GESTOLIBR'
-twa.launcherName = 'GESTOLIBR'
+twa.packageId = 'ci.bfktech.gestomakibar'
+twa.name = 'GESTOMAKIBAR'
+twa.launcherName = 'Makibar'
 twa.appVersionCode = Number(process.env.NUMERO_VERSION ?? 1)
 twa.appVersionName = `1.0.${twa.appVersionCode}`
 twa.fallbackType = 'customtabs'
@@ -30,10 +30,10 @@ const jdk = new JdkHelper(process, config)
 const sdk = await AndroidSdkTools.create(process, config, jdk, log)
 if (!(await sdk.checkBuildTools())) await sdk.installBuildTools()
 // La clé fixe vient des secrets du dépôt (voir apk.yml) ; on n'en crée une que si elle manque.
-if (!fs.existsSync(cle.path)) await new KeyTool(jdk, log).createSigningKey({ ...cle, fullName: 'GESTOLIBR', organizationalUnit: 'BFK-TECH', organization: 'BFK-TECH', country: 'CI' }, true)
+if (!fs.existsSync(cle.path)) await new KeyTool(jdk, log).createSigningKey({ ...cle, fullName: 'GESTOMAKIBAR', organizationalUnit: 'BFK-TECH', organization: 'BFK-TECH', country: 'CI' }, true)
 await new GradleWrapper(process, sdk, dossier).assembleRelease()
 const brut = path.join(dossier, 'app/build/outputs/apk/release/app-release-unsigned.apk')
 const aligne = path.resolve('apk/aligne.apk')
 await sdk.zipalign(brut, aligne)
-await sdk.apksigner(cle.path, cle.password, cle.alias, cle.keypassword, aligne, path.resolve('apk/GESTOLIBR.apk'))
-console.log('APK prête : apk/GESTOLIBR.apk')
+await sdk.apksigner(cle.path, cle.password, cle.alias, cle.keypassword, aligne, path.resolve('apk/GESTOMAKIBAR.apk'))
+console.log('APK prête : apk/GESTOMAKIBAR.apk')
