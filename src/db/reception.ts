@@ -1,10 +1,12 @@
 import { db, nouvelId } from './base'
+import { mouvement } from './emballages'
 
 export interface LigneReception {
   articleId: string
   quantite: number
   coutUnitaire: number // prix d'achat d'une unité
   prixVente?: number // facultatif : seulement si le produit n'a pas encore de prix
+  casiers?: number // casiers pleins livrés (pour les emballages consignés)
 }
 
 export interface Reception {
@@ -12,6 +14,7 @@ export interface Reception {
   fournisseurNom: string // nom tapé ou choisi ; créé s'il n'existe pas encore
   reference?: string
   lignes: LigneReception[]
+  videsRendus?: { emballageId: string; quantite: number }[] // casiers vides rendus au livreur
 }
 
 // Nouveau coût moyen pondéré après une entrée de stock.
@@ -34,7 +37,7 @@ export async function enregistrerReception(r: Reception): Promise<string> {
 
   return db.transaction(
     'rw',
-    [db.fournisseurs, db.achats, db.lignesAchat, db.mouvementsStock, db.articles],
+    [db.fournisseurs, db.achats, db.lignesAchat, db.mouvementsStock, db.articles, db.mouvementsEmballage],
     async () => {
       // 1. Le fournisseur : on le retrouve par son nom, ou on le crée.
       let fournisseurId: string | undefined
@@ -69,6 +72,19 @@ export async function enregistrerReception(r: Reception): Promise<string> {
           fournisseurId: article.fournisseurId ?? fournisseurId,
           ...(article.prixVente === null && l.prixVente ? { prixVente: l.prixVente } : {}),
         })
+      }
+
+      // 6. Les emballages : casiers pleins livrés (dus au fournisseur), et vides rendus au livreur.
+      const livres = new Map<string, number>()
+      for (const l of r.lignes) {
+        const a = await db.articles.get(l.articleId)
+        if (a?.emballageId && l.casiers) livres.set(a.emballageId, (livres.get(a.emballageId) ?? 0) + l.casiers)
+      }
+      const autres = { date: r.date, fournisseurId, documentId: achatId }
+      for (const [emballageId, q] of livres) await db.mouvementsEmballage.add(mouvement('livre', emballageId, q, autres))
+      for (const v of r.videsRendus ?? []) {
+        if (!Number.isInteger(v.quantite) || v.quantite < 0) throw new Error('Le nombre de casiers vides rendus doit être un nombre entier positif.')
+        if (v.quantite > 0) await db.mouvementsEmballage.add(mouvement('rendu_fournisseur', v.emballageId, v.quantite, autres))
       }
       return achatId
     },

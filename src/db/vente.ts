@@ -1,6 +1,7 @@
 import { db, nouvelId } from './base'
 import { detteClient } from './clients'
 import { fcfa } from '../outils/format'
+import { mouvement } from './emballages'
 
 export interface LignePanier {
   articleId: string
@@ -19,6 +20,8 @@ export interface NouvelleVente {
   clientTelephone?: string
   serveurId: string // le serveur qui encaisse (obligatoire)
   table?: string // table ou place du client (facultatif)
+  // Casiers consignés emportés par le client, et vides qu'il rapporte (client obligatoire).
+  emballages?: { emballageId: string; emportes: number; rendus: number }[]
 }
 
 // Enregistre une vente en un seul bloc (transaction) et renvoie l'id du ticket.
@@ -30,7 +33,7 @@ export async function enregistrerVente(v: NouvelleVente): Promise<string> {
 
   return db.transaction(
     'rw',
-    [db.ventes, db.lignesVente, db.mouvementsStock, db.encaissements, db.articles, db.clients, db.modesPaiement, db.serveurs],
+    [db.ventes, db.lignesVente, db.mouvementsStock, db.encaissements, db.articles, db.clients, db.modesPaiement, db.serveurs, db.mouvementsEmballage],
     async () => {
       // 1. Le prix et le coût sont lus MAINTENANT et copiés dans la ligne (valeurs figées).
       const articles = await db.articles.bulkGet(v.lignes.map((l) => l.articleId))
@@ -55,6 +58,9 @@ export async function enregistrerVente(v: NouvelleVente): Promise<string> {
       let clientId: string | undefined
       const nom = v.clientNom?.trim()
       if (aCredit && !nom) throw new Error('Un paiement à crédit demande le nom du client.')
+      const emballages = (v.emballages ?? []).filter((e) => e.emportes || e.rendus)
+      if (emballages.some((e) => !Number.isInteger(e.emportes) || !Number.isInteger(e.rendus) || e.emportes < 0 || e.rendus < 0)) throw new Error('Les casiers emportés ou rendus doivent être des nombres entiers positifs.')
+      if (emballages.length > 0 && !nom) throw new Error('Pour des casiers emportés ou rapportés, indique le nom du client.')
       if (nom) {
         const existant = (await db.clients.toArray()).find((c) => c.nom.toLowerCase() === nom.toLowerCase())
         clientId = existant?.id ?? (await db.clients.add({
@@ -94,6 +100,12 @@ export async function enregistrerVente(v: NouvelleVente): Promise<string> {
       for (const p of v.paiements.filter((p) => p.montant > 0)) {
         await db.encaissements.add({ id: nouvelId(), date, type: 'paiement', modePaiementId: p.modePaiementId, montant: p.montant, venteId, clientId, serveurId: v.serveurId })
       }
+      // 7. Les emballages consignés emportés ou rapportés par le client.
+      for (const e of emballages) {
+        const autres = { date, clientId, documentId: venteId }
+        if (e.emportes) await db.mouvementsEmballage.add(mouvement('emporte_client', e.emballageId, e.emportes, autres))
+        if (e.rendus) await db.mouvementsEmballage.add(mouvement('rendu_client', e.emballageId, e.rendus, autres))
+      }
       return venteId
     },
   )
@@ -106,7 +118,7 @@ export async function enregistrerVente(v: NouvelleVente): Promise<string> {
 export async function annulerVente(venteId: string): Promise<string> {
   return db.transaction(
     'rw',
-    [db.ventes, db.lignesVente, db.mouvementsStock, db.encaissements],
+    [db.ventes, db.lignesVente, db.mouvementsStock, db.encaissements, db.mouvementsEmballage],
     async () => {
       const vente = await db.ventes.get(venteId)
       if (!vente) throw new Error('Ticket introuvable.')
@@ -135,6 +147,11 @@ export async function annulerVente(venteId: string): Promise<string> {
       const encaissements = await db.encaissements.where('venteId').equals(venteId).toArray()
       for (const e of encaissements) {
         await db.encaissements.add({ ...e, id: nouvelId(), date, type: 'rendu', montant: -e.montant, venteId: contreId })
+      }
+      // Les casiers emportés ou rapportés avec ce ticket sont aussi annulés (mouvements inverses).
+      const emballages = await db.mouvementsEmballage.where('documentId').equals(venteId).toArray()
+      for (const m of emballages) {
+        await db.mouvementsEmballage.add({ ...m, id: nouvelId(), date, possession: -m.possession, du: -m.du, documentId: contreId, note: 'Annulation du ticket' })
       }
       return contreId
     },

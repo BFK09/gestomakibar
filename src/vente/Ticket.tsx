@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { emballagesDusParClient } from '../db/emballages'
 import { db } from '../db/base'
 import { annulerVente, quantitesRetournees, retournerArticles } from '../db/vente'
 import { lireEntier } from '../outils/format'
@@ -36,10 +37,15 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
     const retours = await db.ventes.where('retourVenteId').equals(venteId).toArray()
     const dejaRetourne = await quantitesRetournees(venteId)
     const tousModes = await db.modesPaiement.toCollection().sortBy('ordre')
-    return { vente, lignes, encaissements, modes, client, serveur, annulePar, original, boutique, retours, dejaRetourne, tousModes }
+    // Casiers emportés / rapportés avec ce ticket, et ce que le client doit encore en emballages.
+    const nomsEmb = new Map((await db.emballages.toArray()).map((e) => [e.id, e.nom]))
+    const casiers = (await db.mouvementsEmballage.where('documentId').equals(venteId).toArray())
+      .map((m) => `${m.nature === 'emporte_client' ? 'Casiers emportés' : m.nature === 'rendu_client' ? 'Vides rapportés' : 'Casiers'} : ${Math.abs(m.du)} ${nomsEmb.get(m.emballageId) ?? ''}`)
+    const dusClient = vente?.clientId ? [...(await emballagesDusParClient(vente.clientId))].filter(([, q]) => q > 0).map(([id, q]) => `${q} ${nomsEmb.get(id) ?? ''}`) : []
+    return { casiers, dusClient, vente, lignes, encaissements, modes, client, serveur, annulePar, original, boutique, retours, dejaRetourne, tousModes }
   }, [venteId])
   if (!d?.vente) return <p>Chargement…</p>
-  const { vente, lignes, encaissements, modes, client, serveur, annulePar, original, boutique, retours, dejaRetourne, tousModes } = d
+  const { casiers, dusClient, vente, lignes, encaissements, modes, client, serveur, annulePar, original, boutique, retours, dejaRetourne, tousModes } = d
   const estAnnulation = !!vente.annuleVenteId
   const estRetour = !!vente.retourVenteId
   const peutRetourner = !estAnnulation && !estRetour && !annulePar
@@ -74,6 +80,8 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
       '',
       `*TOTAL : ${fcfa(vente!.total)}*`,
       ...encaissements.map((e) => `${e.type === 'rendu' ? 'Rendu ' : ''}${modes.get(e.modePaiementId)} : ${fcfa(e.montant)}`),
+      ...(casiers.length ? ['', ...casiers] : []),
+      dusClient.length ? `Emballages à rapporter : ${dusClient.join(', ')}` : '',
       '',
       'Merci de votre visite !',
     ]
@@ -124,6 +132,8 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
             {e.type === 'rendu' ? 'Rendu ' : ''}{modes.get(e.modePaiementId)} <span>{fcfa(e.montant)}</span>
           </p>
         ))}
+        {casiers.map((c) => <p key={c} className="ticket-ligne">{c}</p>)}
+        {dusClient.length > 0 && <p><small>Emballages à rapporter : {dusClient.join(', ')}</small></p>}
         {annulePar && <p className="ticket-annulation">ANNULÉ (ticket n° {annulePar.numero})</p>}
         {retours.length > 0 && <p className="ticket-annulation">Retour(s) : ticket n° {retours.map((r) => r.numero).join(', ')}</p>}
         {!estAnnulation && !estRetour && <p className="ticket-merci">Merci de votre visite !</p>}

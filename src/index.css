@@ -418,3 +418,13 @@ button svg { vertical-align: -4px; }
 .carte-cloture { margin-top: 12px; }
 .carte-cloture p { margin: 0; }
 .carte-cloture .deux label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; color: var(--doux); }
+
+/* ---------- Emballages consignés ---------- */
+.ligne-emballage { display: grid; grid-template-columns: 1fr 7rem; gap: .5rem; align-items: end; padding: .4rem 0; border-bottom: 1px solid var(--bord); }
+.casiers-client .ligne-emballage { grid-template-columns: 1fr 5.5rem 5.5rem; }
+.ligne-emballage > span { display: flex; flex-direction: column; font-weight: 600; }
+.ligne-emballage > span small { font-weight: 400; opacity: .75; }
+.ligne-emballage label { font-size: .85rem; }
+.casiers-client { margin: .6rem 0; }
+.casiers-client summary { cursor: pointer; font-weight: 600; padding: .4rem 0; }
+.carte-emballage .resume-jour { grid-template-columns: repeat(4, 1fr); }

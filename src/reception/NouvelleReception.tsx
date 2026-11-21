@@ -46,10 +46,12 @@ export default function NouvelleReception() {
   const [lignes, setLignes] = useState<LigneSaisie[]>([])
   const [erreurs, setErreurs] = useState<string[]>([])
   const [message, setMessage] = useState('')
+  const [vides, setVides] = useState<Record<string, string>>({}) // emballageId → casiers vides rendus
 
   const fournisseurs = useLiveQuery(() => db.fournisseurs.orderBy('nom').toArray(), [])
   const articles = useLiveQuery(() => db.articles.orderBy('code').filter((a) => a.actif).toArray(), [])
-  if (!fournisseurs || !articles) return <p>Chargement…</p>
+  const emballages = useLiveQuery(() => db.emballages.orderBy('nom').filter((e) => e.actif).toArray(), [])
+  if (!fournisseurs || !articles || !emballages) return <p>Chargement…</p>
 
   // Suggestions : les 8 premiers articles qui correspondent au texte tapé.
   const texte = sansAccents(recherche.trim())
@@ -96,17 +98,24 @@ export default function NouvelleReception() {
       if (!q || Number.isNaN(q)) pb.push(`${l.article.code} : la quantité doit être un nombre entier supérieur à 0.`)
       if (c === null || Number.isNaN(c)) pb.push(`${l.article.code} : indique le coût d'achat unitaire.`)
       if (Number.isNaN(p)) pb.push(`${l.article.code} : le prix de vente doit être un nombre entier.`)
-      return { articleId: l.article.id, quantite: q ?? 0, coutUnitaire: c ?? 0, prixVente: p ?? undefined }
+      const casiers = l.article.tailleCasier ? lireEntier(l.casiers) ?? 0 : 0
+      return { articleId: l.article.id, quantite: q ?? 0, coutUnitaire: c ?? 0, prixVente: p ?? undefined, casiers: Number.isNaN(casiers) ? 0 : casiers }
     })
+    const videsRendus = Object.entries(vides).map(([emballageId, t]) => {
+      const q = lireEntier(t)
+      if (Number.isNaN(q) || (q ?? 0) < 0) pb.push('Les casiers vides rendus doivent être un nombre entier.')
+      return { emballageId, quantite: q ?? 0 }
+    }).filter((v) => v.quantite > 0)
     setErreurs(pb)
     if (pb.length > 0) return
 
     // Date du jour : on garde l'heure exacte. Autre date : midi, pour éviter les décalages.
     const quand = date === aujourdhui() ? new Date() : new Date(date + 'T12:00:00')
-    await enregistrerReception({ date: quand.toISOString(), fournisseurNom: fournisseur, reference, lignes: propres })
+    await enregistrerReception({ date: quand.toISOString(), fournisseurNom: fournisseur, reference, lignes: propres, videsRendus })
     setMessage(`Réception enregistrée : ${lignes.length} boisson(s), ${fcfa(total)}. Le stock est à jour.`)
     setLignes([])
     setReference('')
+    setVides({})
   }
 
   return (
@@ -196,6 +205,22 @@ export default function NouvelleReception() {
             )
           })}
         </ul>
+      )}
+
+      {emballages.length > 0 && (lignes.some((l) => l.article.emballageId) || Object.keys(vides).length > 0) && (
+        <div className="carte emballages-reception">
+          <strong>Emballages consignés</strong>
+          {emballages.map((e) => {
+            const livres = lignes.filter((l) => l.article.emballageId === e.id).reduce((s, l) => s + (lireEntier(l.casiers) || 0), 0)
+            return (
+              <div className="ligne-emballage" key={e.id}>
+                <span>{e.nom}<small>{livres > 0 ? `${livres} plein(s) livré(s)` : 'aucun plein livré'}</small></span>
+                <label>Vides rendus au livreur<input inputMode="numeric" value={vides[e.id] ?? ''} placeholder="0" onChange={(x) => setVides({ ...vides, [e.id]: x.target.value })} /></label>
+              </div>
+            )
+          })}
+          <p className="info">Les casiers pleins livrés sont dus au fournisseur ; chaque casier vide rendu diminue ce que tu lui dois (voir l'écran Emballages).</p>
+        </div>
       )}
 
       {erreurs.length > 0 && <ul className="erreurs">{erreurs.map((x) => <li key={x}>{x}</li>)}</ul>}

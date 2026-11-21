@@ -1,7 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type {
   Achat, Article, Boutique, Categorie, Client, Cloture, Encaissement, Fournisseur, Inventaire,
-  LigneAchat, LigneInventaire, LigneVente, ModePaiement, MouvementStock, Serveur, Vente,
+  Emballage, LigneAchat, LigneInventaire, LigneVente, ModePaiement, MouvementEmballage, MouvementStock, Serveur, Vente,
 } from './types'
 import { chargerDonneesDeDepart } from './depart'
 
@@ -24,6 +24,8 @@ export class BaseMakibar extends Dexie {
   lignesInventaire!: EntityTable<LigneInventaire, 'id'>
   serveurs!: EntityTable<Serveur, 'id'>
   clotures!: EntityTable<Cloture, 'id'>
+  emballages!: EntityTable<Emballage, 'id'>
+  mouvementsEmballage!: EntityTable<MouvementEmballage, 'id'>
 
   constructor() {
     super('gestomakibar')
@@ -50,6 +52,12 @@ export class BaseMakibar extends Dexie {
       mouvementsStock: 'id, date, articleId, type, documentId',
       inventaires: 'id, date',
       lignesInventaire: 'id, inventaireId, articleId',
+    })
+
+    // Version 2 : les emballages consignés (casiers et bouteilles vides).
+    this.version(2).stores({
+      emballages: 'id, nom',
+      mouvementsEmballage: 'id, date, emballageId, nature, fournisseurId, clientId, documentId',
     })
 
     // "populate" ne s'exécute qu'une fois : à la toute première ouverture.

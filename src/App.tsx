@@ -13,6 +13,7 @@ import Rapports from './rapports/Rapports'
 import Clients from './clients/Clients'
 import Parametres from './parametres/Parametres'
 import Serveurs from './serveurs/Serveurs'
+import Emballages from './emballages/Emballages'
 import Cloture from './cloture/Cloture'
 import Navigation from './navigation/Navigation'
 import { definirPays } from './outils/pays'
@@ -43,6 +44,7 @@ function App() {
         {ecran === 'inventaire' && <Stock />}
         {ecran === 'clients' && <Clients />}
         {ecran === 'serveurs' && <Serveurs />}
+        {ecran === 'emballages' && <Emballages />}
         {ecran === 'cloture' && <Cloture />}
         {ecran === 'rapports' && <Rapports />}
         {ecran === 'sauvegarde' && <Sauvegarde />}

@@ -23,6 +23,7 @@ interface Saisie {
   unite: string
   format: string
   tailleCasier: string
+  emballageId: string
   prixVente: string
   seuilAlerte: string
   actif: boolean
@@ -36,6 +37,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
     async () => [...new Set((await db.articles.toArray()).map((a) => a.unite))].sort(),
     [],
   )
+  const emballages = useLiveQuery(() => db.emballages.orderBy('nom').toArray(), [])
   const [article, setArticle] = useState<Article | null>(null)
   const [saisie, setSaisie] = useState<Saisie | null>(null)
   const [erreurs, setErreurs] = useState<string[]>([])
@@ -45,7 +47,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
   // Au chargement : on remplit le formulaire avec le produit, ou des valeurs vides.
   useEffect(() => {
     if (estNouveau) {
-      setSaisie({ code: '', codeBarre: '', designation: '', categorieId: '', unite: 'bouteille', format: '', tailleCasier: '', prixVente: '', seuilAlerte: '', actif: true })
+      setSaisie({ code: '', codeBarre: '', designation: '', categorieId: '', unite: 'bouteille', format: '', tailleCasier: '', emballageId: '', prixVente: '', seuilAlerte: '', actif: true })
     } else {
       db.articles.get(articleId).then((a) => {
         if (!a) return
@@ -58,6 +60,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
           unite: a.unite,
           format: a.format ?? '',
           tailleCasier: a.tailleCasier?.toString() ?? '',
+          emballageId: a.emballageId ?? '',
           prixVente: a.prixVente?.toString() ?? '',
           seuilAlerte: a.seuilAlerte?.toString() ?? '',
           actif: a.actif,
@@ -121,6 +124,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
       unite: s.unite.trim(),
       format: s.format.trim() || undefined,
       tailleCasier,
+      emballageId: s.emballageId || undefined,
       prixVente,
       seuilAlerte,
       actif: s.actif,
@@ -185,6 +189,16 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
             <input inputMode="numeric" value={saisie.tailleCasier} onChange={(e) => changer('tailleCasier', e.target.value)} placeholder="ex. 12" />
           </label>
         </div>
+
+        {emballages && emballages.length > 0 && (
+          <label>
+            Emballage consigné
+            <select value={saisie.emballageId} onChange={(e) => changer('emballageId', e.target.value)}>
+              <option value="">Aucun (pas de consigne)</option>
+              {emballages.filter((x) => x.actif || x.id === saisie.emballageId).map((x) => <option key={x.id} value={x.id}>{x.nom}</option>)}
+            </select>
+          </label>
+        )}
 
         <label>
           Code-barres (facultatif)

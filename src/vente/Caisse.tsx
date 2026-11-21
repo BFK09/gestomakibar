@@ -38,6 +38,7 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
   const [telephone, setTelephone] = useState('')
   const [erreur, setErreur] = useState('')
   const [ticketId, setTicketId] = useState<string | null>(null)
+  const [casiers, setCasiers] = useState<Record<string, { emportes: string; rendus: string }>>({}) // par emballage
 
   const articles = useLiveQuery(() => db.articles.orderBy('code').filter((a) => a.actif).toArray(), [])
   const modes = useLiveQuery(() => db.modesPaiement.filter((m) => m.actif).sortBy('ordre'), [])
@@ -46,7 +47,8 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
   const serveurs = useLiveQuery(() => db.serveurs.orderBy('nom').filter((x) => x.actif).toArray(), [])
   const categories = useLiveQuery(() => db.categories.orderBy('nom').toArray(), [])
   const boutique = useLiveQuery(() => db.boutique.get('principale'), [])
-  if (!articles || !modes || !clients || !stocks || !serveurs || !categories) return <p>Chargement…</p>
+  const emballages = useLiveQuery(() => db.emballages.filter((e) => e.actif).toArray(), [])
+  if (!emballages || !articles || !modes || !clients || !stocks || !serveurs || !categories) return <p>Chargement…</p>
 
   // Après une vente : on affiche le ticket, puis on repart sur un panier vide.
   if (ticketId) return <Ticket venteId={ticketId} onNouvelleVente={() => setTicketId(null)} onRefaire={onRefaire} />
@@ -66,6 +68,10 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
   const montantEspeces = paiementsEffectifs.filter((p) => p.modePaiementId === especes?.id).reduce((s, p) => s + (lireEntier(p.montant) || 0), 0)
   const recuNombre = lireEntier(recu)
   const monnaie = recuNombre && !Number.isNaN(recuNombre) ? recuNombre - montantEspeces : null
+  // Emballages consignés des boissons du panier (le client peut emporter des casiers ou rapporter des vides).
+  const emballagesPanier = emballages.filter((e) => panier.some((l) => l.article.emballageId === e.id) || casiers[e.id])
+  const saisieCasiers = Object.entries(casiers).map(([emballageId, c]) => ({ emballageId, emportes: lireEntier(c.emportes) ?? 0, rendus: lireEntier(c.rendus) ?? 0 }))
+  const avecCasiers = saisieCasiers.some((c) => c.emportes || c.rendus)
   const aCredit = paiementsEffectifs.some((p) => p.modePaiementId === credit?.id && (lireEntier(p.montant) || 0) > 0)
 
   const texte = sansAccents(recherche.trim())
@@ -116,6 +122,14 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
       setErreur('Pour un paiement à crédit, indique le nom du client.')
       return
     }
+    if (avecCasiers && !client.trim()) {
+      setErreur('Pour des casiers emportés ou rapportés, indique le nom du client.')
+      return
+    }
+    if (saisieCasiers.some((c) => Number.isNaN(c.emportes) || Number.isNaN(c.rendus))) {
+      setErreur('Les casiers doivent être des nombres entiers.')
+      return
+    }
     try {
       const id = await enregistrerVente({
         lignes: panier.map((l) => ({ articleId: l.article.id, quantite: l.quantite })),
@@ -124,8 +138,9 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
         clientTelephone: telephone,
         serveurId: serveur!.id,
         table,
+        emballages: saisieCasiers,
       })
-      setPanier([]); setPaiements([]); setRecu(''); setClient(''); setTelephone(''); setTable('')
+      setPanier([]); setPaiements([]); setRecu(''); setClient(''); setTelephone(''); setTable(''); setCasiers({})
       if (!boutique?.garderServeur) setServeur(null)
       setTicketId(id)
     } catch (e) {
@@ -244,9 +259,23 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
             <input value={table} onChange={(e) => setTable(e.target.value)} placeholder="ex. 4, terrasse, VIP…" />
           </label>
 
+          {emballagesPanier.length > 0 && (
+            <details className="casiers-client" open={avecCasiers}>
+              <summary>Le client emporte des casiers ou rapporte des vides ?</summary>
+              {emballagesPanier.map((e) => (
+                <div className="ligne-emballage" key={e.id}>
+                  <span>{e.nom}{e.consigne ? <small>consigne {fcfa(e.consigne)}</small> : null}</span>
+                  <label>Emportés<input inputMode="numeric" placeholder="0" value={casiers[e.id]?.emportes ?? ''} onChange={(x) => setCasiers({ ...casiers, [e.id]: { emportes: x.target.value, rendus: casiers[e.id]?.rendus ?? '' } })} /></label>
+                  <label>Vides rapportés<input inputMode="numeric" placeholder="0" value={casiers[e.id]?.rendus ?? ''} onChange={(x) => setCasiers({ ...casiers, [e.id]: { emportes: casiers[e.id]?.emportes ?? '', rendus: x.target.value } })} /></label>
+                </div>
+              ))}
+              <p className="info">Le nom du client est alors obligatoire : l'appli note les casiers qu'il doit rapporter.</p>
+            </details>
+          )}
+
           <div className="deux">
             <label>
-              Client {aCredit ? '(obligatoire pour un crédit)' : '(facultatif)'}
+              Client {aCredit ? '(obligatoire pour un crédit)' : avecCasiers ? '(obligatoire pour les casiers)' : '(facultatif)'}
               <input list="clients" value={client} onChange={(e) => setClient(e.target.value)} placeholder="Nom du client" />
               <datalist id="clients">{clients.map((c) => <option key={c.id} value={c.nom} />)}</datalist>
             </label>

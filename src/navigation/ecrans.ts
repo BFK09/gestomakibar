@@ -1,6 +1,6 @@
-import { BookOpen, ChartColumn, DatabaseBackup, LayoutDashboard, PackagePlus, Settings, ShoppingCart, Boxes, Users, UserRound, Calculator, type LucideIcon } from 'lucide-react'
+import { BookOpen, ChartColumn, DatabaseBackup, LayoutDashboard, PackagePlus, Settings, ShoppingCart, Boxes, Users, UserRound, Calculator, Container, type LucideIcon } from 'lucide-react'
 
-export type Ecran = 'tableau' | 'vente' | 'catalogue' | 'reception' | 'inventaire' | 'clients' | 'serveurs' | 'cloture' | 'rapports' | 'sauvegarde' | 'parametres'
+export type Ecran = 'tableau' | 'vente' | 'catalogue' | 'reception' | 'inventaire' | 'clients' | 'serveurs' | 'emballages' | 'cloture' | 'rapports' | 'sauvegarde' | 'parametres'
 
 export interface InfoEcran { id: Ecran; nom: string; court: string; icone: LucideIcon; description: string }
 
@@ -12,6 +12,7 @@ export const ECRANS: InfoEcran[] = [
   { id: 'clients', nom: 'Crédits clients', court: 'Crédits', icone: Users, description: 'Ardoises et remboursements' },
   { id: 'catalogue', nom: 'Produits', court: 'Produits', icone: BookOpen, description: 'Boissons, prix, casiers' },
   { id: 'reception', nom: 'Réception', court: 'Réception', icone: PackagePlus, description: 'Boissons reçues du fournisseur' },
+  { id: 'emballages', nom: 'Emballages', court: 'Emballages', icone: Container, description: 'Casiers consignés, vides, dus' },
   { id: 'inventaire', nom: 'Stock', court: 'Stock', icone: Boxes, description: 'Inventaire, pertes et casse' },
   { id: 'serveurs', nom: 'Serveurs', court: 'Serveurs', icone: UserRound, description: 'Liste des serveurs et leurs codes' },
   { id: 'rapports', nom: 'Rapports', court: 'Rapports', icone: ChartColumn, description: 'Ventes, mouvements, PDF, Excel' },

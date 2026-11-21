@@ -66,6 +66,7 @@ export interface Article {
   unite: string // bouteille, canette, sachet…
   format?: string // contenance : 33 cl, 65 cl, 1,5 L…
   tailleCasier?: number | null // nombre de bouteilles par casier ou par pack (12, 20, 24…)
+  emballageId?: string // le casier consigné dans lequel cette boisson arrive (vide = pas de consigne)
   prixVente: number | null // vide tant qu'il n'est pas saisi
   seuilAlerte: number | null
   coutMoyen: number | null // coût moyen pondéré, recalculé à chaque achat
@@ -173,4 +174,38 @@ export interface LigneInventaire {
   articleId: string
   quantiteTheorique: number
   quantiteComptee: number
+}
+
+// Un type d'emballage consigné : casier avec ses bouteilles vides (ex. « Casier Solibra 12 »).
+// Le fournisseur livre des casiers pleins et reprend les vides ; ce qui n'est pas rendu se paie (consigne).
+export interface Emballage {
+  id: string
+  nom: string
+  consigne: number | null // valeur d'un emballage (casier + bouteilles), vide tant qu'elle n'est pas saisie
+  actif: boolean
+}
+
+// Journal des emballages, comme le stock : on ne modifie jamais une ligne, on en ajoute.
+// Chaque mouvement change deux soldes :
+// - possession : emballages présents chez nous (pleins ou vides) ;
+// - du : emballages dus au fournisseur (positif = on lui doit) ou par le client (positif = il nous doit).
+export interface MouvementEmballage {
+  id: string
+  date: string
+  emballageId: string
+  nature:
+    | 'livre' // le fournisseur livre des casiers pleins
+    | 'rendu_fournisseur' // on rend des vides au fournisseur
+    | 'consigne_fournisseur' // on paie au fournisseur la consigne d'emballages qu'on garde
+    | 'emporte_client' // un client emporte des casiers
+    | 'rendu_client' // un client rapporte des vides
+    | 'consigne_client' // un client paie la consigne d'emballages qu'il garde
+    | 'ajustement' // comptage, casse, achat d'emballages, solde de départ
+  possession: number
+  du: number
+  fournisseurId?: string
+  clientId?: string
+  documentId?: string // la réception ou la vente d'origine
+  montant?: number // argent versé ou reçu pour une consigne
+  note?: string
 }
