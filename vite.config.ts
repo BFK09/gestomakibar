@@ -14,7 +14,7 @@ export default defineConfig({
     react(),
     // Rend l'application installable et utilisable hors ligne.
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt', // nouvelle version : un bouton « Mettre à jour » (voir MiseAJour.tsx)
       includeAssets: ['icone.svg'],
       manifest: {
         name: 'GESTOMAKIBAR',

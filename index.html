@@ -10,9 +10,10 @@
          aux couleurs du logo, pour éviter le flash blanc d'une page web qui charge. -->
     <style>
       html { background: #1f0f07; }
-      .demarrage { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(circle at 50% 42%, #3a1d0f, #1f0f07 70%); }
-      .demarrage img { width: 112px; height: 112px; border-radius: 26px; box-shadow: 0 12px 40px rgba(0, 0, 0, .45); animation: demarrage-pulse 1.4s ease-in-out infinite; }
-      @keyframes demarrage-pulse { 50% { transform: scale(.96); opacity: .85; } }
+      /* Même fond, même taille et même place que l'écran de démarrage Android (APK) : le relais ne se voit pas. */
+      .demarrage { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #1f0f07; }
+      .demarrage img { width: min(40vw, 40vh); height: min(40vw, 40vh); animation: demarrage-pulse 1.4s ease-in-out 1.2s infinite; }
+      @keyframes demarrage-pulse { 50% { opacity: .8; } }
     </style>
     <title>GESTOMAKIBAR</title>
   </head>

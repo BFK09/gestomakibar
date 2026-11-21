@@ -459,8 +459,9 @@ input, select, textarea { border-radius: 12px !important; }
 .menu-bas { padding-top: 4px; border-top: none; box-shadow: 0 -6px 20px rgba(16, 24, 40, 0.08); border-radius: 22px 22px 0 0; }
 .menu-bas button { font-weight: 700; font-size: 0.72rem; }
 .menu-bas button.centre { position: relative; color: var(--bleu); }
-.menu-bas button.centre .pastille { width: 64px; height: 64px; margin-top: -30px; border-radius: 999px; background: linear-gradient(145deg, #c2410c, var(--bouton)); color: #fff; box-shadow: 0 8px 18px rgba(154, 52, 18, 0.45), 0 0 0 5px var(--carte); }
-.menu-bas button.centre.actif .pastille { background: linear-gradient(145deg, #ea580c, #9a3412); }
+.menu-bas button.centre .pastille { width: 64px; height: 64px; margin-top: -30px; border-radius: 999px; background: var(--carte); color: var(--bleu); border: 2px solid var(--bleu); box-shadow: 0 6px 14px rgba(154, 52, 18, 0.25), 0 0 0 5px var(--carte); }
+.menu-bas button.centre:not(.actif) { color: var(--doux); }
+.menu-bas button.centre.actif .pastille { background: linear-gradient(145deg, #ea580c, #9a3412); color: #fff; border-color: transparent; box-shadow: 0 8px 18px rgba(154, 52, 18, 0.45), 0 0 0 5px var(--carte); }
 .menu-bas button.centre:active .pastille { transform: scale(0.94); }
 
 /* Puces de catégorie avec leur couleur */
@@ -473,7 +474,7 @@ input, select, textarea { border-radius: 12px !important; }
 .tuile-boisson { min-height: 98px; padding: 12px 10px 10px 14px; border: 1px solid var(--bord); border-left: 6px solid var(--cat, var(--bleu)); background: linear-gradient(180deg, color-mix(in srgb, var(--cat, #888) 8%, var(--carte)), var(--carte)); box-shadow: var(--ombre); transition: transform .08s; }
 .tuile-boisson:active { transform: scale(0.96); }
 .tuile-boisson:hover, .tuile-boisson:focus, .tuile-boisson:focus-visible { outline: none; border-color: var(--bord); border-left-color: var(--cat, var(--bleu)); }
-.tuile-boisson-nom { font-size: 0.92rem; font-weight: 800; }
+.tuile-boisson-nom { font-size: 0.9rem; font-weight: 800; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tuile-boisson-prix { font-size: 0.95rem; font-weight: 900; }
 .pastille-qte { min-width: 28px; height: 28px; font-size: 0.9rem; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
 
@@ -483,9 +484,11 @@ input, select, textarea { border-radius: 12px !important; }
 .pied-caisse .valider { display: flex; justify-content: space-between; align-items: center; min-height: 54px; padding: 8px 18px; font-size: 1rem; border-radius: 14px; }
 .pied-caisse .valider strong { font-size: 1.35rem; font-weight: 900; white-space: nowrap; }
 .pied-caisse .valider span { font-size: 1.1rem; }
-.page:has(.pied-caisse) { padding-bottom: calc(var(--hauteur-menu) + 60px + env(safe-area-inset-bottom)); }
+.page:has(.pied-caisse) { padding-bottom: calc(var(--hauteur-menu) + 130px + env(safe-area-inset-bottom)); }
 .pied-caisse .vider { min-height: 54px; border-radius: 14px; }
 @media (min-width: 900px) { .pied-caisse { bottom: 16px; } }
 
 /* Bandeau du serveur plus visible */
 .bandeau-serveur { border-radius: 14px; font-weight: 700; }
+
+.mise-a-jour { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
