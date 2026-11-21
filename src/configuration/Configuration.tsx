@@ -78,7 +78,7 @@ export default function Configuration() {
     const id = nouvelId()
     await db.articles.add({
       id, code: codeSuivant(dansCategorie, nomCategorie.get(nouveau.categorieId)!), designation,
-      categorieId: nouveau.categorieId, unite: 'pièce', prixVente: null, seuilAlerte: null, coutMoyen: null, actif: true,
+      categorieId: nouveau.categorieId, unite: 'bouteille', prixVente: null, seuilAlerte: null, coutMoyen: null, actif: true,
     })
     setChoix({ ...choix, [id]: { stock: '', prixAchat: '', prixVente: '' } })
     setNouveau({ designation: '', categorieId: nouveau.categorieId })

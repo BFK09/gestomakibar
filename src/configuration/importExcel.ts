@@ -116,7 +116,7 @@ export async function importerProduits(fichier: File): Promise<ResultatImport> {
       }
       article = {
         id: nouvelId(), code: codeSuivant(articles.filter((a) => a.categorieId === cat!.id), cat.nom), designation: nom,
-        categorieId: cat.id, unite: 'pièce', prixVente: null, seuilAlerte: null, coutMoyen: null, actif: true,
+        categorieId: cat.id, unite: 'bouteille', prixVente: null, seuilAlerte: null, coutMoyen: null, actif: true,
       }
       await db.articles.add(article)
       articles.push(article)

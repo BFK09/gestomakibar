@@ -21,6 +21,8 @@ interface Saisie {
   designation: string
   categorieId: string
   unite: string
+  format: string
+  tailleCasier: string
   prixVente: string
   seuilAlerte: string
   actif: boolean
@@ -43,7 +45,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
   // Au chargement : on remplit le formulaire avec l'article, ou des valeurs vides.
   useEffect(() => {
     if (estNouveau) {
-      setSaisie({ code: '', codeBarre: '', designation: '', categorieId: '', unite: 'pièce', prixVente: '', seuilAlerte: '', actif: true })
+      setSaisie({ code: '', codeBarre: '', designation: '', categorieId: '', unite: 'bouteille', format: '', tailleCasier: '', prixVente: '', seuilAlerte: '', actif: true })
     } else {
       db.articles.get(articleId).then((a) => {
         if (!a) return
@@ -54,6 +56,8 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
           designation: a.designation,
           categorieId: a.categorieId,
           unite: a.unite,
+          format: a.format ?? '',
+          tailleCasier: a.tailleCasier?.toString() ?? '',
           prixVente: a.prixVente?.toString() ?? '',
           seuilAlerte: a.seuilAlerte?.toString() ?? '',
           actif: a.actif,
@@ -90,6 +94,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
     const code = s.code.trim().toUpperCase()
     const prixVente = lireEntier(s.prixVente)
     const seuilAlerte = lireEntier(s.seuilAlerte)
+    const tailleCasier = lireEntier(s.tailleCasier)
     const codeBarre = s.codeBarre.trim() || undefined
 
     // Vérifications avant d'enregistrer.
@@ -99,6 +104,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
     if (!s.categorieId) pb.push('Choisis une catégorie.')
     if (!s.unite.trim()) pb.push("L'unité est obligatoire.")
     if (Number.isNaN(prixVente)) pb.push(`Le prix de vente doit être un nombre entier (en ${monnaie()}).`)
+    if (Number.isNaN(tailleCasier) || tailleCasier === 0) pb.push('Le nombre de bouteilles par casier doit être un nombre entier (ou laissé vide).')
     if (Number.isNaN(seuilAlerte)) pb.push("Le seuil d'alerte doit être un nombre entier.")
     const memeCode = code ? await db.articles.where('code').equals(code).first() : undefined
     if (memeCode && memeCode.id !== article?.id) pb.push(`Le code ${code} est déjà utilisé par « ${memeCode.designation} ».`)
@@ -113,6 +119,8 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
       designation: s.designation.trim(),
       categorieId: s.categorieId,
       unite: s.unite.trim(),
+      format: s.format.trim() || undefined,
+      tailleCasier,
       prixVente,
       seuilAlerte,
       actif: s.actif,
@@ -128,7 +136,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
   return (
     <div className="fond" onClick={onFermer}>
       <form className="fiche" onClick={(e) => e.stopPropagation()} onSubmit={enregistrer}>
-        <h3>{estNouveau ? 'Nouvel article' : `Modifier ${article?.code ?? ''}`}</h3>
+        <h3>{estNouveau ? 'Nouveau produit' : `Modifier ${article?.code ?? ''}`}</h3>
 
         {erreurs.length > 0 && (
           <ul className="erreurs">{erreurs.map((x) => <li key={x}>{x}</li>)}</ul>
@@ -148,7 +156,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
             <input
               value={saisie.code}
               onChange={(e) => { setCodeModifieALaMain(true); changer('code', e.target.value) }}
-              placeholder="ex. CAH-019"
+              placeholder="ex. BIE-020"
             />
           </label>
           <label>
@@ -166,6 +174,17 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
             autoFocus={estNouveau}
           />
         </label>
+
+        <div className="deux">
+          <label>
+            Format (contenance)
+            <input value={saisie.format} onChange={(e) => changer('format', e.target.value)} placeholder="ex. 65 cl" />
+          </label>
+          <label>
+            Bouteilles par casier
+            <input inputMode="numeric" value={saisie.tailleCasier} onChange={(e) => changer('tailleCasier', e.target.value)} placeholder="ex. 12" />
+          </label>
+        </div>
 
         <label>
           Code-barres (facultatif)

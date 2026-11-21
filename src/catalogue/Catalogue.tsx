@@ -86,7 +86,7 @@ export default function Catalogue() {
                 <span className="code">{a.code}</span>
                 <span className="nom">
                   {a.designation}
-                  <small>{nomCategorie.get(a.categorieId)} · {a.unite}</small>
+                  <small>{nomCategorie.get(a.categorieId)} · {a.unite}{a.format ? ` ${a.format}` : ''}{a.tailleCasier ? ` · casier de ${a.tailleCasier}` : ''}</small>
                 </span>
                 <span className="chiffres">
                   {a.prixVente === null ? <em className="a-saisir">Prix à saisir</em> : fcfa(a.prixVente)}
