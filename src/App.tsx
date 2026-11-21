@@ -27,7 +27,8 @@ function App() {
   const [visite, setVisite] = useState(0)
   // null = pas encore configurée ; undefined = lecture en cours.
   const boutique = useLiveQuery(async () => (await db.boutique.get('principale')) ?? null, [])
-  if (boutique === undefined) return null
+  // Lecture de la base : on garde l'écran de démarrage (le même que dans index.html), sans flash blanc.
+  if (boutique === undefined) return <div className="demarrage"><img src={`${import.meta.env.BASE_URL}icone.svg`} alt="" /></div>
   // Tant que l'établissement n'est pas configuré, on affiche l'assistant de démarrage.
   if (boutique === null) return <Configuration />
   // Le pays et la monnaie de l'établissement, utilisés pour afficher les montants et les numéros WhatsApp.

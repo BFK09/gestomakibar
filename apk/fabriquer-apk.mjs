@@ -18,6 +18,10 @@ twa.launcherName = 'Makibar'
 twa.appVersionCode = Number(process.env.NUMERO_VERSION ?? 1)
 twa.appVersionName = `1.0.${twa.appVersionCode}`
 twa.fallbackType = 'customtabs'
+// Écran de démarrage : ses couleurs viennent du manifeste du site (background_color, brun foncé du logo) ;
+// il s'efface en douceur quand l'appli est prête, sur le même fond que l'écran de démarrage du site.
+twa.splashScreenFadeOutDuration = 400
+console.log('Couleur du démarrage :', twa.backgroundColor?.hex?.() ?? twa.backgroundColor)
 twa.signingKey = { path: cle.path, alias: cle.alias }
 console.log('Application :', twa.name, twa.host, twa.startUrl)
 

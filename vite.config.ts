@@ -27,8 +27,8 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'any',
         categories: ['business', 'productivity'],
-        background_color: '#ffffff',
-        theme_color: '#9a3412',
+        background_color: '#1f0f07', // écran de démarrage Android, aux couleurs du logo
+        theme_color: '#1f0f07',
         icons: [
           { src: 'icone-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icone-512.png', sizes: '512x512', type: 'image/png' },

@@ -51,7 +51,7 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
   const categories = useLiveQuery(() => db.categories.orderBy('nom').toArray(), [])
   const boutique = useLiveQuery(() => db.boutique.get('principale'), [])
   const emballages = useLiveQuery(() => db.emballages.filter((e) => e.actif).toArray(), [])
-  if (!emballages || !articles || !modes || !clients || !stocks || !serveurs || !categories) return <p>Chargement…</p>
+  if (!emballages || !articles || !modes || !clients || !stocks || !serveurs || !categories) return null
 
   // Après une vente : on affiche le ticket, puis on repart sur un panier vide.
   if (ticketId) return <Ticket venteId={ticketId} onNouvelleVente={() => setTicketId(null)} onRefaire={onRefaire} />
