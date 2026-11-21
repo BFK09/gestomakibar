@@ -412,3 +412,9 @@ button svg { vertical-align: -4px; }
 .tuile.sans-prix { opacity: 0.55; }
 .tuile.sans-prix .tuile-prix { color: var(--doux); font-weight: 400; }
 .pastille-qte { position: absolute; top: -6px; right: -6px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: var(--bleu); color: #fff; font-size: 0.8rem; font-weight: 700; display: grid; place-items: center; }
+
+/* ---------- Clôture de caisse ---------- */
+.choix-journee { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; color: var(--doux); max-width: 220px; }
+.carte-cloture { margin-top: 12px; }
+.carte-cloture p { margin: 0; }
+.carte-cloture .deux label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; color: var(--doux); }
