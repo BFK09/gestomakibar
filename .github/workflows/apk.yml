@@ -1,0 +1,46 @@
+# Fabrique l'APK Android et la met en téléchargement dans « Releases » du dépôt.
+# Se lance à la main (onglet Actions → « Fabriquer l'APK » → Run workflow).
+name: Fabriquer l'APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save @bubblewrap/core@1.24.1
+      - name: Préparer le kit Android de GitHub pour Bubblewrap
+        run: |
+          [ -e "$ANDROID_HOME/tools" ] || ln -s "$ANDROID_HOME/cmdline-tools/latest" "$ANDROID_HOME/tools"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;34.0.0" > /dev/null
+      - name: Récupérer la clé de signature fixe (secrets du dépôt)
+        env:
+          CLE_APK_B64: ${{ secrets.CLE_APK_B64 }}
+        run: |
+          if [ -z "$CLE_APK_B64" ]; then echo "Secret CLE_APK_B64 absent : ajoutez-le dans Settings > Secrets and variables > Actions."; exit 1; fi
+          echo "$CLE_APK_B64" | base64 -d > apk/cle.keystore
+      - run: node apk/fabriquer-apk.mjs
+        env:
+          NUMERO_VERSION: ${{ github.run_number }}
+          MOT_DE_PASSE_CLE: ${{ secrets.MOT_DE_PASSE_CLE }}
+      - name: Mettre l'APK en téléchargement
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "apk-${{ github.run_number }}" apk/GESTOLIBR.apk \
+            --title "GESTOLIBR Android, version 1.0.${{ github.run_number }}" \
+            --notes "APK Android de GESTOLIBR. Il ouvre https://bfk09.github.io/gestolibr/ comme une application. À installer sur le téléphone (autoriser l'installation depuis cette source)." \
+            --latest

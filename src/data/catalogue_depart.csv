@@ -1,0 +1,72 @@
+code;designation;categorie;unite;format;casier
+BIE-001;Flag Spéciale 65 cl;Bières;bouteille;65 cl;12
+BIE-002;Flag Spéciale 33 cl;Bières;bouteille;33 cl;24
+BIE-003;Bock Solibra 65 cl;Bières;bouteille;65 cl;12
+BIE-004;Castel Beer 65 cl;Bières;bouteille;65 cl;12
+BIE-005;Castel Beer 33 cl;Bières;bouteille;33 cl;24
+BIE-006;33 Export 65 cl;Bières;bouteille;65 cl;12
+BIE-007;33 Export 33 cl;Bières;bouteille;33 cl;24
+BIE-008;Beaufort Lager 33 cl;Bières;bouteille;33 cl;24
+BIE-009;Beaufort Lager canette 50 cl;Bières;canette;50 cl;24
+BIE-010;Doppel Munich 65 cl;Bières;bouteille;65 cl;12
+BIE-011;Ivoire 65 cl;Bières;bouteille;65 cl;12
+BIE-012;Ivoire 33 cl;Bières;bouteille;33 cl;24
+BIE-013;Heineken 33 cl;Bières;bouteille;33 cl;24
+BIE-014;Heineken canette 50 cl;Bières;canette;50 cl;24
+BIE-015;Guinness Foreign Extra 65 cl;Bières;bouteille;65 cl;12
+BIE-016;Guinness Foreign Extra 33 cl;Bières;bouteille;33 cl;24
+BIE-017;Guinness Smooth 33 cl;Bières;bouteille;33 cl;24
+BIE-018;Desperados 33 cl;Bières;bouteille;33 cl;24
+BIE-019;Booster 33 cl;Bières;bouteille;33 cl;24
+SUC-001;Coca-Cola 33 cl;Sucreries;bouteille;33 cl;24
+SUC-002;Coca-Cola 50 cl PET;Sucreries;bouteille;50 cl;12
+SUC-003;Coca-Cola 1 L PET;Sucreries;bouteille;1 L;12
+SUC-004;Coca-Cola canette 33 cl;Sucreries;canette;33 cl;24
+SUC-005;Fanta Orange 33 cl;Sucreries;bouteille;33 cl;24
+SUC-006;Fanta Cocktail 33 cl;Sucreries;bouteille;33 cl;24
+SUC-007;Sprite 33 cl;Sucreries;bouteille;33 cl;24
+SUC-008;Youzou 33 cl;Sucreries;bouteille;33 cl;24
+SUC-009;World Cola 33 cl;Sucreries;bouteille;33 cl;24
+SUC-010;Top Orange 33 cl;Sucreries;bouteille;33 cl;24
+SUC-011;Top Ananas 33 cl;Sucreries;bouteille;33 cl;24
+SUC-012;Top Grenadine 33 cl;Sucreries;bouteille;33 cl;24
+SUC-013;Schweppes Tonic 33 cl;Sucreries;bouteille;33 cl;24
+SUC-014;Schweppes Bitter Lemon 33 cl;Sucreries;bouteille;33 cl;24
+SUC-015;Vimto 33 cl;Sucreries;bouteille;33 cl;24
+SUC-016;Malta Guinness 33 cl;Sucreries;bouteille;33 cl;24
+ENE-001;Bawa 33 cl;Énergisants;canette;33 cl;24
+ENE-002;Red Bull 25 cl;Énergisants;canette;25 cl;24
+ENE-003;XXL Energy 33 cl;Énergisants;canette;33 cl;24
+EAU-001;Eau Awa 1,5 L;Eaux;bouteille;1,5 L;6
+EAU-002;Eau Awa 50 cl;Eaux;bouteille;50 cl;12
+EAU-003;Eau Céleste 1,5 L;Eaux;bouteille;1,5 L;6
+EAU-004;Eau Céleste 50 cl;Eaux;bouteille;50 cl;12
+EAU-005;Eau Olgane 1,5 L;Eaux;bouteille;1,5 L;6
+EAU-006;Eau Cristaline 1,5 L;Eaux;bouteille;1,5 L;6
+EAU-007;Eau en sachet;Eaux;sachet;30 cl;30
+JUS-001;Jus de bissap;Jus locaux;bouteille;50 cl;
+JUS-002;Jus de gingembre (gnamankoudji);Jus locaux;bouteille;50 cl;
+JUS-003;Jus de tamarin (tomi);Jus locaux;bouteille;50 cl;
+JUS-004;Jus de passion;Jus locaux;bouteille;50 cl;
+JUS-005;Jus de baobab (bouye);Jus locaux;bouteille;50 cl;
+VIN-001;Vin rouge Valpierre 75 cl;Vins;bouteille;75 cl;12
+VIN-002;Vin rouge Valpierre 1 L brique;Vins;brique;1 L;12
+VIN-003;Vin rouge (autre) 75 cl;Vins;bouteille;75 cl;12
+VIN-004;Vin blanc 75 cl;Vins;bouteille;75 cl;12
+VIN-005;Vin rosé 75 cl;Vins;bouteille;75 cl;12
+VIN-006;Vin mousseux 75 cl;Vins;bouteille;75 cl;6
+VIN-007;Champagne 75 cl;Vins;bouteille;75 cl;6
+VIN-008;Bangui (vin de palme);Vins;litre;1 L;
+SPI-001;Whisky Johnnie Walker Red Label 75 cl;Spiritueux;bouteille;75 cl;
+SPI-002;Whisky Johnnie Walker Black Label 75 cl;Spiritueux;bouteille;75 cl;
+SPI-003;Whisky Jameson 75 cl;Spiritueux;bouteille;75 cl;
+SPI-004;Whisky Black & White 75 cl;Spiritueux;bouteille;75 cl;
+SPI-005;Whisky Chivas Regal 75 cl;Spiritueux;bouteille;75 cl;
+SPI-006;Gin Gordon's 75 cl;Spiritueux;bouteille;75 cl;
+SPI-007;Vodka Smirnoff 75 cl;Spiritueux;bouteille;75 cl;
+SPI-008;Martini Bianco 1 L;Spiritueux;bouteille;1 L;
+SPI-009;Pastis 51 1 L;Spiritueux;bouteille;1 L;
+SPI-010;Baileys 70 cl;Spiritueux;bouteille;70 cl;
+SPI-011;Liqueur 20 cl;Spiritueux;bouteille;20 cl;
+SPI-012;Koutoukou;Spiritueux;bouteille;75 cl;
+SPI-013;Whisky au verre (dose);Spiritueux;verre;4 cl;
