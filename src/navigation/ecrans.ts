@@ -1,4 +1,4 @@
-import { BookOpen, ChartColumn, DatabaseBackup, LayoutDashboard, PackagePlus, Settings, ShoppingCart, Boxes, Users, UserRound, Calculator, Container, Truck, type LucideIcon } from 'lucide-react'
+import { Beer, BookOpen, ChartColumn, DatabaseBackup, LayoutDashboard, PackagePlus, Settings, Boxes, Users, UserRound, Calculator, Container, Truck, type LucideIcon } from 'lucide-react'
 
 export type Ecran = 'tableau' | 'vente' | 'catalogue' | 'reception' | 'inventaire' | 'clients' | 'serveurs' | 'emballages' | 'livraisons' | 'cloture' | 'rapports' | 'sauvegarde' | 'parametres'
 
@@ -6,7 +6,7 @@ export interface InfoEcran { id: Ecran; nom: string; court: string; icone: Lucid
 
 // Tous les écrans, dans l'ordre du menu. « court » = le nom affiché sous l'icône du menu du bas.
 export const ECRANS: InfoEcran[] = [
-  { id: 'vente', nom: 'Caisse', court: 'Caisse', icone: ShoppingCart, description: 'Vendre, tickets du jour' },
+  { id: 'vente', nom: 'Caisse', court: 'Caisse', icone: Beer, description: 'Vendre, tickets du jour' },
   { id: 'tableau', nom: 'Tableau de bord', court: 'Accueil', icone: LayoutDashboard, description: 'Chiffres du jour, alertes' },
   { id: 'cloture', nom: 'Clôture de caisse', court: 'Clôture', icone: Calculator, description: 'Argent remis par chaque serveur' },
   { id: 'clients', nom: 'Crédits clients', court: 'Crédits', icone: Users, description: 'Ardoises et remboursements' },
