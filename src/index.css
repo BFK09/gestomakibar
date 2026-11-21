@@ -428,3 +428,11 @@ button svg { vertical-align: -4px; }
 .casiers-client { margin: .6rem 0; }
 .casiers-client summary { cursor: pointer; font-weight: 600; padding: .4rem 0; }
 .carte-emballage .resume-jour { grid-template-columns: repeat(4, 1fr); }
+
+/* ---------- Mode dépôt : tarif, casiers, livraisons ---------- */
+a.bouton { display: inline-flex; align-items: center; padding: 8px 14px; border: 1px solid var(--bord); border-radius: 6px; background: var(--carte); color: inherit; text-decoration: none; }
+.onglets.tarif { margin: 8px 0; }
+.bouton-casier { display: block; margin-top: 4px; padding: 3px 8px; font-size: .78rem; white-space: nowrap; }
+.livraison { border-top: 1px solid var(--bord); padding: 10px 0; }
+.livraison p { margin: 6px 0; }
+.livraison .boutons input { flex: 1 1 140px; }

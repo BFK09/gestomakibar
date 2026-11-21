@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/base'
-import type { Article, Serveur } from '../db/types'
+import { modeDepot, type Article, type Serveur } from '../db/types'
 import { stockParArticle } from '../db/stock'
 import { enregistrerVente } from '../db/vente'
 import { fcfa, lireEntier } from '../outils/format'
@@ -38,6 +38,9 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
   const [telephone, setTelephone] = useState('')
   const [erreur, setErreur] = useState('')
   const [ticketId, setTicketId] = useState<string | null>(null)
+  const [tarif, setTarif] = useState<'detail' | 'gros'>('detail')
+  const [livrer, setLivrer] = useState(false)
+  const [livraison, setLivraison] = useState({ adresse: '', note: '' })
   const [casiers, setCasiers] = useState<Record<string, { emportes: string; rendus: string }>>({}) // par emballage
 
   const articles = useLiveQuery(() => db.articles.orderBy('code').filter((a) => a.actif).toArray(), [])
@@ -58,7 +61,10 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
 
   const especes = modes.find((m) => m.nature === 'especes')
   const credit = modes.find((m) => m.nature === 'credit')
-  const total = panier.reduce((s, l) => s + l.quantite * (l.article.prixVente ?? 0), 0)
+  const depot = modeDepot(boutique)
+  // Prix d'une unité selon le tarif choisi (gros : prix revendeur s'il existe, sinon prix de détail).
+  const prixDe = (a: Article) => (depot && tarif === 'gros' ? a.prixGros ?? a.prixVente : a.prixVente) ?? 0
+  const total = panier.reduce((s, l) => s + l.quantite * prixDe(l.article), 0)
 
   // Sans paiement saisi, tout est payé en espèces par défaut.
   const paiementsEffectifs: PaiementSaisi[] =
@@ -93,6 +99,14 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
 
 
 
+  // Un client revendeur connu passe automatiquement au prix de gros (et son téléphone est repris).
+  function choisirClient(nom: string) {
+    setClient(nom)
+    const c = clients!.find((x) => x.nom.toLowerCase() === nom.trim().toLowerCase())
+    if (c && depot && c.type === 'revendeur' && tarif !== 'gros') { setTarif('gros'); setPaiements([]) }
+    if (c?.telephone && !telephone) setTelephone(c.telephone)
+  }
+
   function changerQuantite(i: number, q: number) {
     if (q <= 0) setPanier(panier.filter((_, j) => j !== i))
     else setPanier(panier.map((l, j) => (j === i ? { ...l, quantite: q } : l)))
@@ -122,6 +136,10 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
       setErreur('Pour un paiement à crédit, indique le nom du client.')
       return
     }
+    if (depot && livrer && (!client.trim() || !livraison.adresse.trim())) {
+      setErreur('Pour une livraison, indique le nom du client et l\'adresse.')
+      return
+    }
     if (avecCasiers && !client.trim()) {
       setErreur('Pour des casiers emportés ou rapportés, indique le nom du client.')
       return
@@ -139,8 +157,11 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
         serveurId: serveur!.id,
         table,
         emballages: saisieCasiers,
+        tarif: depot && tarif === 'gros' ? 'gros' : undefined,
+        livraison: depot && livrer ? { adresse: livraison.adresse, telephone, note: livraison.note } : undefined,
       })
       setPanier([]); setPaiements([]); setRecu(''); setClient(''); setTelephone(''); setTable(''); setCasiers({})
+      setTarif('detail'); setLivrer(false); setLivraison({ adresse: '', note: '' })
       if (!boutique?.garderServeur) setServeur(null)
       setTicketId(id)
     } catch (e) {
@@ -160,6 +181,7 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
         categories={categories}
         quantites={new Map(panier.map((l) => [l.article.id, l.quantite]))}
         onAjouter={ajouter}
+        prixDe={prixDe}
       />
 
       <label className="recherche-article">
@@ -199,6 +221,13 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
         <p className="succes">Ticket annulé. Ses boissons sont remises dans le panier : corrige-les puis valide la nouvelle vente.</p>
       )}
 
+      {depot && (
+        <div className="onglets tarif">
+          <button type="button" className={tarif === 'detail' ? 'choisi' : ''} onClick={() => { setTarif('detail'); setPaiements([]) }}>Prix détail</button>
+          <button type="button" className={tarif === 'gros' ? 'choisi' : ''} onClick={() => { setTarif('gros'); setPaiements([]) }}>Prix de gros (revendeur)</button>
+        </div>
+      )}
+
       {panier.length === 0 ? (
         <p className="info">Le panier est vide.</p>
       ) : (
@@ -209,14 +238,15 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
               <li key={l.article.id}>
                 <span className="nom">
                   {l.article.designation}
-                  <small>{fcfa(l.article.prixVente)} l'unité{l.quantite > stock && <span className="alerte"> · stock affiché : {stock}</span>}</small>
+                  <small>{fcfa(prixDe(l.article))} l'unité{depot && l.article.tailleCasier && l.quantite >= l.article.tailleCasier ? ` · ${Math.floor(l.quantite / l.article.tailleCasier)} casier(s)${l.quantite % l.article.tailleCasier ? ` + ${l.quantite % l.article.tailleCasier}` : ''}` : ''}{l.quantite > stock && <span className="alerte"> · stock affiché : {stock}</span>}</small>
+                  {depot && l.article.tailleCasier ? <button type="button" className="bouton-casier" onClick={() => changerQuantite(i, l.quantite + l.article.tailleCasier!)}>+ 1 casier ({l.article.tailleCasier})</button> : null}
                 </span>
                 <span className="quantite">
                   <button type="button" onClick={() => changerQuantite(i, l.quantite - 1)} aria-label="Moins">−</button>
                   <span>{l.quantite}</span>
                   <button type="button" onClick={() => changerQuantite(i, l.quantite + 1)} aria-label="Plus">+</button>
                 </span>
-                <strong className="sous-total">{fcfa(l.quantite * (l.article.prixVente ?? 0))}</strong>
+                <strong className="sous-total">{fcfa(l.quantite * prixDe(l.article))}</strong>
               </li>
             )
           })}
@@ -276,7 +306,7 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
           <div className="deux">
             <label>
               Client {aCredit ? '(obligatoire pour un crédit)' : avecCasiers ? '(obligatoire pour les casiers)' : '(facultatif)'}
-              <input list="clients" value={client} onChange={(e) => setClient(e.target.value)} placeholder="Nom du client" />
+              <input list="clients" value={client} onChange={(e) => choisirClient(e.target.value)} placeholder="Nom du client" />
               <datalist id="clients">{clients.map((c) => <option key={c.id} value={c.nom} />)}</datalist>
             </label>
             <label>
@@ -284,6 +314,18 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
               <input inputMode="tel" value={telephone} onChange={(e) => setTelephone(e.target.value)} />
             </label>
           </div>
+
+          {depot && (
+            <>
+              <label className="case"><input type="checkbox" checked={livrer} onChange={(e) => setLivrer(e.target.checked)} /> À livrer chez le client</label>
+              {livrer && (
+                <div className="deux">
+                  <label>Adresse de livraison<input value={livraison.adresse} onChange={(e) => setLivraison({ ...livraison, adresse: e.target.value })} placeholder="quartier, repère…" /></label>
+                  <label>Remarque<input value={livraison.note} onChange={(e) => setLivraison({ ...livraison, note: e.target.value })} placeholder="ex. avant 18 h" /></label>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 

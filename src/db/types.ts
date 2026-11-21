@@ -22,7 +22,12 @@ export interface Boutique {
   // true : à la caisse, le même serveur reste choisi d'une vente à l'autre (« Changer » pour passer la main).
   // Vide ou false : on redemande « Qui encaisse ? » après chaque vente (plus sûr sur un appareil partagé).
   garderServeur?: boolean
+  // Vente en gros aux revendeurs (prix de gros, vente au casier, livraisons). Toujours actif pour un dépôt.
+  venteEnGros?: boolean
 }
+
+// Le mode dépôt (gros, casiers, livraisons) est-il actif ?
+export const modeDepot = (b?: Pick<Boutique, 'type' | 'venteEnGros'>) => b?.type === 'depot' || !!b?.venteEnGros
 
 // Un serveur ou une serveuse. Chaque vente indique qui l'a faite, pour la clôture de caisse.
 export interface Serveur {
@@ -68,6 +73,7 @@ export interface Article {
   tailleCasier?: number | null // nombre de bouteilles par casier ou par pack (12, 20, 24…)
   emballageId?: string // le casier consigné dans lequel cette boisson arrive (vide = pas de consigne)
   prixVente: number | null // vide tant qu'il n'est pas saisi
+  prixGros?: number | null // prix d'une unité pour un revendeur (mode dépôt) ; vide = prix de détail
   seuilAlerte: number | null
   coutMoyen: number | null // coût moyen pondéré, recalculé à chaque achat
   actif: boolean
@@ -101,6 +107,7 @@ export interface Vente {
   serveurId?: string // le serveur qui a fait la vente
   table?: string // table ou place du client (facultatif)
   total: number
+  tarif?: 'gros' // prix de gros (revendeur) ; vide = prix de détail
   // Une vente n'est jamais modifiée ni supprimée. Pour l'annuler, on crée un
   // contre-ticket (montants et quantités négatifs) qui pointe vers elle.
   annuleVenteId?: string // rempli seulement sur un contre-ticket (annulation complète)
@@ -208,4 +215,17 @@ export interface MouvementEmballage {
   documentId?: string // la réception ou la vente d'origine
   montant?: number // argent versé ou reçu pour une consigne
   note?: string
+}
+
+// Une livraison : un ticket de vente à apporter chez le client (mode dépôt).
+export interface Livraison {
+  id: string
+  venteId: string
+  date: string // date de la commande
+  adresse: string
+  telephone?: string
+  note?: string
+  statut: 'a_livrer' | 'livree' | 'annulee'
+  livreur?: string
+  livreeLe?: string
 }

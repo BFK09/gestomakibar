@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Menu, X } from 'lucide-react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from '../db/base'
+import { modeDepot } from '../db/types'
 
 const LOGO = `${import.meta.env.BASE_URL}icone.svg`
 import { ECRANS, infoEcran, PRINCIPAUX, type Ecran } from './ecrans'
@@ -18,6 +21,8 @@ export default function Navigation({ nomBoutique, ecran, onChoisir }: Props) {
   const choisir = (e: Ecran) => { setPlusOuvert(false); onChoisir(e) }
   const dansPlus = !PRINCIPAUX.includes(ecran)
   const actuel = infoEcran(ecran)
+  const boutique = useLiveQuery(() => db.boutique.get('principale'), [])
+  const ecrans = ECRANS.filter((e) => !e.depot || modeDepot(boutique))
 
   // Fermer le panneau « Plus » avec Échap.
   useEffect(() => {
@@ -40,7 +45,7 @@ export default function Navigation({ nomBoutique, ecran, onChoisir }: Props) {
       {/* Ordinateur : menu à gauche */}
       <nav className="menu-cote" aria-label="Menu principal">
         <div className="menu-cote-tete"><img className="logo" src={LOGO} alt="" /><strong>{nomBoutique}</strong></div>
-        {ECRANS.map((e) => (
+        {ecrans.map((e) => (
           <button key={e.id} className={ecran === e.id ? 'actif' : ''} aria-current={ecran === e.id ? 'page' : undefined} onClick={() => choisir(e.id)}>
             <e.icone size={20} strokeWidth={ecran === e.id ? 2.4 : 1.9} />
             <span>{e.nom}</span>
@@ -74,7 +79,7 @@ export default function Navigation({ nomBoutique, ecran, onChoisir }: Props) {
               <button className="icone-seule" onClick={() => setPlusOuvert(false)} aria-label="Fermer"><X size={20} /></button>
             </div>
             <div className="grille-ecrans">
-              {ECRANS.map((e) => (
+              {ecrans.map((e) => (
                 <button key={e.id} className={ecran === e.id ? 'actif' : ''} onClick={() => choisir(e.id)}>
                   <span className="pastille"><e.icone size={22} /></span>
                   <strong>{e.nom}</strong>

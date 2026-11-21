@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { modeDepot } from '../db/types'
 import { db, nouvelId } from '../db/base'
 import type { Article } from '../db/types'
 import { fcfa, lireEntier } from '../outils/format'
@@ -25,6 +26,7 @@ interface Saisie {
   tailleCasier: string
   emballageId: string
   prixVente: string
+  prixGros: string
   seuilAlerte: string
   actif: boolean
 }
@@ -38,6 +40,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
     [],
   )
   const emballages = useLiveQuery(() => db.emballages.orderBy('nom').toArray(), [])
+  const boutique = useLiveQuery(() => db.boutique.get('principale'), [])
   const [article, setArticle] = useState<Article | null>(null)
   const [saisie, setSaisie] = useState<Saisie | null>(null)
   const [erreurs, setErreurs] = useState<string[]>([])
@@ -47,7 +50,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
   // Au chargement : on remplit le formulaire avec le produit, ou des valeurs vides.
   useEffect(() => {
     if (estNouveau) {
-      setSaisie({ code: '', codeBarre: '', designation: '', categorieId: '', unite: 'bouteille', format: '', tailleCasier: '', emballageId: '', prixVente: '', seuilAlerte: '', actif: true })
+      setSaisie({ code: '', codeBarre: '', designation: '', categorieId: '', unite: 'bouteille', format: '', tailleCasier: '', emballageId: '', prixVente: '', prixGros: '', seuilAlerte: '', actif: true })
     } else {
       db.articles.get(articleId).then((a) => {
         if (!a) return
@@ -62,6 +65,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
           tailleCasier: a.tailleCasier?.toString() ?? '',
           emballageId: a.emballageId ?? '',
           prixVente: a.prixVente?.toString() ?? '',
+          prixGros: a.prixGros?.toString() ?? '',
           seuilAlerte: a.seuilAlerte?.toString() ?? '',
           actif: a.actif,
         })
@@ -96,6 +100,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
     const s = saisie!
     const code = s.code.trim().toUpperCase()
     const prixVente = lireEntier(s.prixVente)
+    const prixGros = lireEntier(s.prixGros)
     const seuilAlerte = lireEntier(s.seuilAlerte)
     const tailleCasier = lireEntier(s.tailleCasier)
     const codeBarre = s.codeBarre.trim() || undefined
@@ -106,6 +111,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
     if (!s.designation.trim()) pb.push('La désignation est obligatoire.')
     if (!s.categorieId) pb.push('Choisis une catégorie.')
     if (!s.unite.trim()) pb.push("L'unité est obligatoire.")
+    if (Number.isNaN(prixGros)) pb.push(`Le prix de gros doit être un nombre entier (en ${monnaie()}).`)
     if (Number.isNaN(prixVente)) pb.push(`Le prix de vente doit être un nombre entier (en ${monnaie()}).`)
     if (Number.isNaN(tailleCasier) || tailleCasier === 0) pb.push('Le nombre de bouteilles par casier doit être un nombre entier (ou laissé vide).')
     if (Number.isNaN(seuilAlerte)) pb.push("Le seuil d'alerte doit être un nombre entier.")
@@ -126,6 +132,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
       tailleCasier,
       emballageId: s.emballageId || undefined,
       prixVente,
+      prixGros,
       seuilAlerte,
       actif: s.actif,
     }
@@ -225,6 +232,14 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
             <input inputMode="numeric" value={saisie.seuilAlerte} onChange={(e) => changer('seuilAlerte', e.target.value)} placeholder="ex. 10" />
           </label>
         </div>
+
+        {modeDepot(boutique) && (
+          <label>
+            Prix de gros, à l'unité (revendeurs)
+            <input inputMode="numeric" value={saisie.prixGros} onChange={(e) => changer('prixGros', e.target.value)} placeholder="vide = prix de détail" />
+            {(() => { const g = lireEntier(saisie.prixGros); const t = lireEntier(saisie.tailleCasier); return g && t ? <small className="info">soit {fcfa(g * t)} le casier de {t}</small> : null })()}
+          </label>
+        )}
 
         {!estNouveau && (
           <p className="info">

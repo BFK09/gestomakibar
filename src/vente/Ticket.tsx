@@ -42,10 +42,11 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
     const casiers = (await db.mouvementsEmballage.where('documentId').equals(venteId).toArray())
       .map((m) => `${m.nature === 'emporte_client' ? 'Casiers emportés' : m.nature === 'rendu_client' ? 'Vides rapportés' : 'Casiers'} : ${Math.abs(m.du)} ${nomsEmb.get(m.emballageId) ?? ''}`)
     const dusClient = vente?.clientId ? [...(await emballagesDusParClient(vente.clientId))].filter(([, q]) => q > 0).map(([id, q]) => `${q} ${nomsEmb.get(id) ?? ''}`) : []
-    return { casiers, dusClient, vente, lignes, encaissements, modes, client, serveur, annulePar, original, boutique, retours, dejaRetourne, tousModes }
+    const livraison = await db.livraisons.where('venteId').equals(venteId).first()
+    return { livraison, casiers, dusClient, vente, lignes, encaissements, modes, client, serveur, annulePar, original, boutique, retours, dejaRetourne, tousModes }
   }, [venteId])
   if (!d?.vente) return <p>Chargement…</p>
-  const { casiers, dusClient, vente, lignes, encaissements, modes, client, serveur, annulePar, original, boutique, retours, dejaRetourne, tousModes } = d
+  const { livraison, casiers, dusClient, vente, lignes, encaissements, modes, client, serveur, annulePar, original, boutique, retours, dejaRetourne, tousModes } = d
   const estAnnulation = !!vente.annuleVenteId
   const estRetour = !!vente.retourVenteId
   const peutRetourner = !estAnnulation && !estRetour && !annulePar
@@ -75,6 +76,8 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
       `Ticket n° ${vente!.numero} du ${new Date(vente!.date).toLocaleString('fr-FR')}`,
       serveur ? `Servi par : ${serveur.nom}${vente!.table ? ` · Table ${vente!.table}` : ''}` : '',
       client ? `Client : ${client.nom}` : '',
+      vente!.tarif === 'gros' ? 'Prix de gros' : '',
+      livraison ? `À livrer : ${livraison.adresse}` : '',
       '',
       ...lignes.map((x) => `${x.designation}\n   ${x.quantite} × ${fcfa(x.prixUnitaire)} = ${fcfa(x.quantite * x.prixUnitaire)}`),
       '',
@@ -116,6 +119,8 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
         <p>Ticket n° {vente.numero}<br />{new Date(vente.date).toLocaleString('fr-FR')}</p>
         {serveur && <p>Servi par : {serveur.nom}{vente.table && <> · Table {vente.table}</>}</p>}
         {client && <p>Client : {client.nom}</p>}
+        {vente.tarif === 'gros' && <p>Prix de gros</p>}
+        {livraison && <p>{livraison.statut === 'livree' ? 'Livré' : livraison.statut === 'annulee' ? 'Livraison annulée' : 'À livrer'} : {livraison.adresse}{livraison.note && <><br /><small>{livraison.note}</small></>}</p>}
         <table>
           <tbody>
             {lignes.map((l) => (

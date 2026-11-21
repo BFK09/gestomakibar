@@ -22,6 +22,8 @@ export interface NouvelleVente {
   table?: string // table ou place du client (facultatif)
   // Casiers consignés emportés par le client, et vides qu'il rapporte (client obligatoire).
   emballages?: { emballageId: string; emportes: number; rendus: number }[]
+  tarif?: 'gros' // prix de gros (revendeur) : le prix de gros de chaque produit, ou son prix de détail s'il n'en a pas
+  livraison?: { adresse: string; telephone?: string; note?: string } // à livrer chez le client
 }
 
 // Enregistre une vente en un seul bloc (transaction) et renvoie l'id du ticket.
@@ -33,7 +35,7 @@ export async function enregistrerVente(v: NouvelleVente): Promise<string> {
 
   return db.transaction(
     'rw',
-    [db.ventes, db.lignesVente, db.mouvementsStock, db.encaissements, db.articles, db.clients, db.modesPaiement, db.serveurs, db.mouvementsEmballage],
+    [db.ventes, db.lignesVente, db.mouvementsStock, db.encaissements, db.articles, db.clients, db.modesPaiement, db.serveurs, db.mouvementsEmballage, db.livraisons],
     async () => {
       // 1. Le prix et le coût sont lus MAINTENANT et copiés dans la ligne (valeurs figées).
       const articles = await db.articles.bulkGet(v.lignes.map((l) => l.articleId))
@@ -41,9 +43,10 @@ export async function enregistrerVente(v: NouvelleVente): Promise<string> {
       const lignes = v.lignes.map((l, i) => {
         const a = articles[i]
         if (!a) throw new Error('Article introuvable.')
-        if (a.prixVente === null) throw new Error(`${a.code} n'a pas de prix de vente.`)
-        total += a.prixVente * l.quantite
-        return { article: a, quantite: l.quantite }
+        const prix = v.tarif === 'gros' ? a.prixGros ?? a.prixVente : a.prixVente
+        if (prix === null || prix === undefined) throw new Error(`${a.code} n'a pas de prix de vente.`)
+        total += prix * l.quantite
+        return { article: a, quantite: l.quantite, prix }
       })
 
       // 2. Les paiements doivent couvrir exactement le total.
@@ -61,6 +64,8 @@ export async function enregistrerVente(v: NouvelleVente): Promise<string> {
       const emballages = (v.emballages ?? []).filter((e) => e.emportes || e.rendus)
       if (emballages.some((e) => !Number.isInteger(e.emportes) || !Number.isInteger(e.rendus) || e.emportes < 0 || e.rendus < 0)) throw new Error('Les casiers emportés ou rendus doivent être des nombres entiers positifs.')
       if (emballages.length > 0 && !nom) throw new Error('Pour des casiers emportés ou rapportés, indique le nom du client.')
+      if (v.livraison && !v.livraison.adresse.trim()) throw new Error('Indique l\'adresse de livraison.')
+      if (v.livraison && !nom) throw new Error('Pour une livraison, indique le nom du client.')
       if (nom) {
         const existant = (await db.clients.toArray()).find((c) => c.nom.toLowerCase() === nom.toLowerCase())
         clientId = existant?.id ?? (await db.clients.add({
@@ -84,14 +89,14 @@ export async function enregistrerVente(v: NouvelleVente): Promise<string> {
       const dernier = await db.ventes.orderBy('numero').last()
       const venteId = nouvelId()
       const date = new Date().toISOString()
-      await db.ventes.add({ id: venteId, numero: (dernier?.numero ?? 0) + 1, date, clientId, serveurId: v.serveurId, table, total })
+      await db.ventes.add({ id: venteId, numero: (dernier?.numero ?? 0) + 1, date, clientId, serveurId: v.serveurId, table, total, ...(v.tarif === 'gros' ? { tarif: 'gros' as const } : {}) })
 
       // 5. Les lignes de vente et les sorties de stock (quantité négative).
-      for (const { article, quantite } of lignes) {
+      for (const { article, quantite, prix } of lignes) {
         await db.lignesVente.add({
           id: nouvelId(), venteId, articleId: article.id,
           designation: article.designation, categorieId: article.categorieId,
-          quantite, prixUnitaire: article.prixVente!, coutUnitaire: article.coutMoyen ?? 0,
+          quantite, prixUnitaire: prix, coutUnitaire: article.coutMoyen ?? 0,
         })
         await db.mouvementsStock.add({ id: nouvelId(), date, articleId: article.id, quantite: -quantite, type: 'vente', documentId: venteId })
       }
@@ -100,7 +105,12 @@ export async function enregistrerVente(v: NouvelleVente): Promise<string> {
       for (const p of v.paiements.filter((p) => p.montant > 0)) {
         await db.encaissements.add({ id: nouvelId(), date, type: 'paiement', modePaiementId: p.modePaiementId, montant: p.montant, venteId, clientId, serveurId: v.serveurId })
       }
-      // 7. Les emballages consignés emportés ou rapportés par le client.
+      // 7. La livraison à faire, s'il y en a une.
+      if (v.livraison) {
+        await db.livraisons.add({ id: nouvelId(), venteId, date, adresse: v.livraison.adresse.trim(), telephone: v.livraison.telephone?.trim() || undefined, note: v.livraison.note?.trim() || undefined, statut: 'a_livrer' })
+      }
+
+      // 8. Les emballages consignés emportés ou rapportés par le client.
       for (const e of emballages) {
         const autres = { date, clientId, documentId: venteId }
         if (e.emportes) await db.mouvementsEmballage.add(mouvement('emporte_client', e.emballageId, e.emportes, autres))
@@ -118,7 +128,7 @@ export async function enregistrerVente(v: NouvelleVente): Promise<string> {
 export async function annulerVente(venteId: string): Promise<string> {
   return db.transaction(
     'rw',
-    [db.ventes, db.lignesVente, db.mouvementsStock, db.encaissements, db.mouvementsEmballage],
+    [db.ventes, db.lignesVente, db.mouvementsStock, db.encaissements, db.mouvementsEmballage, db.livraisons],
     async () => {
       const vente = await db.ventes.get(venteId)
       if (!vente) throw new Error('Ticket introuvable.')
@@ -135,7 +145,7 @@ export async function annulerVente(venteId: string): Promise<string> {
       const date = new Date().toISOString()
       await db.ventes.add({
         id: contreId, numero: (dernier?.numero ?? 0) + 1, date,
-        clientId: vente.clientId, serveurId: vente.serveurId, table: vente.table, total: -vente.total, annuleVenteId: venteId,
+        clientId: vente.clientId, serveurId: vente.serveurId, table: vente.table, total: -vente.total, annuleVenteId: venteId, tarif: vente.tarif,
       })
 
       const lignes = await db.lignesVente.where('venteId').equals(venteId).toArray()
@@ -153,6 +163,8 @@ export async function annulerVente(venteId: string): Promise<string> {
       for (const m of emballages) {
         await db.mouvementsEmballage.add({ ...m, id: nouvelId(), date, possession: -m.possession, du: -m.du, documentId: contreId, note: 'Annulation du ticket' })
       }
+      // Une livraison pas encore faite n'a plus lieu d'être.
+      await db.livraisons.where('venteId').equals(venteId).filter((l) => l.statut === 'a_livrer').modify({ statut: 'annulee' })
       return contreId
     },
   )
@@ -207,7 +219,7 @@ export async function retournerArticles(
       const dette = await detteClient(vente.clientId!)
       if (total > dette) throw new Error(`Le client ne doit que ${fcfa(dette)} : rembourse plutôt en espèces ou en mobile money.`)
     }
-    await db.ventes.add({ id: retourId, numero: (dernier?.numero ?? 0) + 1, date, clientId: vente.clientId, serveurId: vente.serveurId, table: vente.table, total: -total, retourVenteId: venteId })
+    await db.ventes.add({ id: retourId, numero: (dernier?.numero ?? 0) + 1, date, clientId: vente.clientId, serveurId: vente.serveurId, table: vente.table, total: -total, retourVenteId: venteId, tarif: vente.tarif })
     await db.encaissements.add({ id: nouvelId(), date, type: 'rendu', modePaiementId, montant: -total, venteId: retourId, clientId: vente.clientId, serveurId: vente.serveurId })
     return retourId
   })

@@ -7,11 +7,12 @@ interface Props {
   categories: Categorie[]
   quantites: Map<string, number> // quantité déjà dans le panier, affichée sur la tuile
   onAjouter: (a: Article) => void
+  prixDe?: (a: Article) => number // prix affiché (détail ou gros)
 }
 
 // Les boissons en grandes tuiles : un toucher = une bouteille de plus dans le panier.
 // Les puces du haut filtrent par catégorie (Bières, Sucreries…).
-export default function TuilesProduits({ articles, categories, quantites, onAjouter }: Props) {
+export default function TuilesProduits({ articles, categories, quantites, onAjouter, prixDe }: Props) {
   const [categorieId, setCategorieId] = useState('')
   const utilisees = categories.filter((c) => articles.some((a) => a.categorieId === c.id))
   const visibles = articles.filter((a) => !categorieId || a.categorieId === categorieId)
@@ -31,7 +32,7 @@ export default function TuilesProduits({ articles, categories, quantites, onAjou
             <button key={a.id} className={`tuile-boisson${a.prixVente === null ? ' sans-prix' : ''}`} onClick={() => onAjouter(a)}>
               {q ? <span className="pastille-qte">{q}</span> : null}
               <span className="tuile-boisson-nom">{a.designation}</span>
-              <span className="tuile-boisson-prix">{a.prixVente === null ? 'sans prix' : fcfa(a.prixVente)}</span>
+              <span className="tuile-boisson-prix">{a.prixVente === null ? 'sans prix' : fcfa(prixDe ? prixDe(a) : a.prixVente)}</span>
             </button>
           )
         })}

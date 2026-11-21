@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import type { TypeEtablissement } from '../db/types'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, nouvelId } from '../db/base'
 import { terminerConfiguration } from '../db/configuration'
@@ -14,7 +15,7 @@ import { importerProduits, modeleExcel, type Saisie } from './importExcel'
 // 1. Identification  2. Choix des produits, stock et prix  3. Vérification et validation
 export default function Configuration() {
   const [etape, setEtape] = useState(1)
-  const [identite, setIdentite] = useState({ nom: '', responsable: '', telephone: '', adresse: '', pays: 'CI' })
+  const [identite, setIdentite] = useState({ nom: '', responsable: '', telephone: '', adresse: '', pays: 'CI', type: 'maquis' as TypeEtablissement })
   const [choix, setChoix] = useState<Record<string, Saisie>>({}) // articleId → saisie
   const [recherche, setRecherche] = useState('')
   const [categorieId, setCategorieId] = useState('')
@@ -117,7 +118,7 @@ export default function Configuration() {
     setErreurs(pb)
     if (pb.length > 0) return
     await terminerConfiguration(
-      { nom: identite.nom.trim(), responsable: identite.responsable.trim(), telephone: identite.telephone.trim() || undefined, adresse: identite.adresse.trim() || undefined, pays: identite.pays },
+      { nom: identite.nom.trim(), responsable: identite.responsable.trim(), telephone: identite.telephone.trim() || undefined, adresse: identite.adresse.trim() || undefined, pays: identite.pays, type: identite.type },
       produits,
     )
     // L'application affiche alors automatiquement la caisse.
@@ -170,7 +171,12 @@ export default function Configuration() {
 
       {etape === 1 && (
         <div className="carte">
-          <label>Nom de l'établissement (maquis, bar) *<input value={identite.nom} onChange={(e) => setIdentite({ ...identite, nom: e.target.value })} autoFocus /></label>
+          <label>Nom de l'établissement *<input value={identite.nom} onChange={(e) => setIdentite({ ...identite, nom: e.target.value })} autoFocus /></label>
+          <label>Type d'établissement
+            <select value={identite.type} onChange={(e) => setIdentite({ ...identite, type: e.target.value as TypeEtablissement })}>
+              <option value="maquis">Maquis</option><option value="bar">Bar</option><option value="depot">Dépôt de boissons (vente en gros, livraisons)</option>
+            </select>
+          </label>
           <label>Responsable *<input value={identite.responsable} onChange={(e) => setIdentite({ ...identite, responsable: e.target.value })} /></label>
           <label>Pays (indicatif téléphonique et monnaie)
             <select value={identite.pays} onChange={(e) => { definirPays(e.target.value); setIdentite({ ...identite, pays: e.target.value }) }}>
