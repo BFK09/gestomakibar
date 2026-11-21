@@ -19,6 +19,9 @@ export interface Boutique {
   // Heure de début de la « journée commerciale » (0 à 23). Un maquis ouvert jusqu'à 3 h du matin :
   // avec 6, une vente faite à 2 h compte dans la journée de la veille. Vide = 6 h.
   debutJournee?: number
+  // true : à la caisse, le même serveur reste choisi d'une vente à l'autre (« Changer » pour passer la main).
+  // Vide ou false : on redemande « Qui encaisse ? » après chaque vente (plus sûr sur un appareil partagé).
+  garderServeur?: boolean
 }
 
 // Un serveur ou une serveuse. Chaque vente indique qui l'a faite, pour la clôture de caisse.

@@ -24,7 +24,8 @@ interface Props {
 
 export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: Props) {
   // Le serveur qui encaisse. L'appareil du comptoir est partagé : après chaque vente,
-  // on redemande qui encaisse, pour que chaque vente soit au bon nom.
+  // on redemande qui encaisse, pour que chaque vente soit au bon nom (sauf si l'option
+  // « garder le même serveur » est activée dans l'écran Serveurs).
   const [serveur, setServeur] = useState<Serveur | null>(null)
   const [table, setTable] = useState('')
   const [recherche, setRecherche] = useState('')
@@ -44,6 +45,7 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
   const stocks = useLiveQuery(() => stockParArticle(), [])
   const serveurs = useLiveQuery(() => db.serveurs.orderBy('nom').filter((x) => x.actif).toArray(), [])
   const categories = useLiveQuery(() => db.categories.orderBy('nom').toArray(), [])
+  const boutique = useLiveQuery(() => db.boutique.get('principale'), [])
   if (!articles || !modes || !clients || !stocks || !serveurs || !categories) return <p>Chargement…</p>
 
   // Après une vente : on affiche le ticket, puis on repart sur un panier vide.
@@ -124,7 +126,7 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
         table,
       })
       setPanier([]); setPaiements([]); setRecu(''); setClient(''); setTelephone(''); setTable('')
-      setServeur(null)
+      if (!boutique?.garderServeur) setServeur(null)
       setTicketId(id)
     } catch (e) {
       setErreur((e as Error).message)

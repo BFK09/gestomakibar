@@ -11,6 +11,7 @@ interface Edition { id: string | null; nom: string; code: string; actif: boolean
 // pour qu'un serveur ne vende pas au nom d'un autre.
 export default function Serveurs() {
   const serveurs = useLiveQuery(() => db.serveurs.orderBy('nom').toArray(), [])
+  const boutique = useLiveQuery(() => db.boutique.get('principale'), [])
   const [edition, setEdition] = useState<Edition | null>(null)
   const [erreur, setErreur] = useState('')
   if (!serveurs) return <p>Chargement…</p>
@@ -65,6 +66,18 @@ export default function Serveurs() {
             </li>
           ))}
         </ul>
+      </div>
+      <div className="carte">
+        <strong>À la caisse, après chaque vente</strong>
+        <label className="case">
+          <input type="checkbox" checked={!!boutique?.garderServeur} onChange={(e) => db.boutique.update('principale', { garderServeur: e.target.checked })} />
+          Garder le même serveur pour la vente suivante
+        </label>
+        <p className="info">
+          {boutique?.garderServeur
+            ? "Le serveur reste choisi d'une vente à l'autre : plus rapide quand c'est plein. Pour passer la main, touche « Changer » en haut de la caisse."
+            : "Après chaque vente, la caisse redemande « Qui encaisse ? » (et le code s'il y en a un) : plus sûr quand plusieurs serveurs partagent l'appareil."}
+        </p>
       </div>
     </section>
   )

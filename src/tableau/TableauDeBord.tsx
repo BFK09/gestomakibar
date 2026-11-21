@@ -1,26 +1,28 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { debutDuJour, etatDuStock, resumePeriode, ventesSeptJours } from '../db/statistiques'
+import { etatDuStock, resumePeriode, ventesSeptJours } from '../db/statistiques'
 import { fcfa } from '../outils/format'
 import { bilansJournee, debutJournee } from '../db/cloture'
-import { journeeDe } from '../db/journee'
+import { bornesJournee, journeeDe } from '../db/journee'
 
 type Periode = 'jour' | 'semaine' | 'mois'
 const NOMS: Record<Periode, string> = { jour: "Aujourd'hui", semaine: '7 derniers jours', mois: 'Ce mois-ci' }
 
-// Calcule le début de la période choisie ; la fin est toujours demain à 0 h.
-function bornes(p: Periode) {
-  const fin = debutDuJour(); fin.setDate(fin.getDate() + 1)
-  const debut = debutDuJour()
-  if (p === 'semaine') debut.setDate(debut.getDate() - 6)
-  if (p === 'mois') debut.setDate(1)
-  return [debut.toISOString(), fin.toISOString()] as const
+// Bornes de la période choisie, en journées commerciales (de l'heure de début à la même heure
+// le lendemain), comme la clôture de caisse : les deux écrans donnent donc les mêmes chiffres.
+function bornes(p: Periode, heure: number) {
+  const journee = journeeDe(new Date(), heure)
+  const { au } = bornesJournee(journee, heure)
+  const [a, m, j] = journee.split('-').map(Number)
+  const premier = p === 'jour' ? new Date(a, m - 1, j) : p === 'semaine' ? new Date(a, m - 1, j - 6) : new Date(a, m - 1, 1)
+  const cle = `${premier.getFullYear()}-${String(premier.getMonth() + 1).padStart(2, '0')}-${String(premier.getDate()).padStart(2, '0')}`
+  return [bornesJournee(cle, heure).du, au] as const
 }
 
 export default function TableauDeBord({ onVoirCatalogue }: { onVoirCatalogue: () => void }) {
   const [periode, setPeriode] = useState<Periode>('jour')
-  const resume = useLiveQuery(() => resumePeriode(...bornes(periode)), [periode])
-  const jours = useLiveQuery(() => ventesSeptJours(), [])
+  const resume = useLiveQuery(async () => resumePeriode(...bornes(periode, await debutJournee())), [periode])
+  const jours = useLiveQuery(async () => ventesSeptJours(await debutJournee()), [])
   const stock = useLiveQuery(() => etatDuStock(), [])
   // Ventes de la journée commerciale en cours, serveur par serveur.
   const serveurs = useLiveQuery(async () => bilansJournee(journeeDe(new Date(), await debutJournee())), [])
@@ -51,12 +53,11 @@ export default function TableauDeBord({ onVoirCatalogue }: { onVoirCatalogue: ()
         <table className="tableau-simple">
           <tbody>
             {resume.parMode.map((m) => (
-              <tr key={m.nom}><td>{m.nom}</td><td>{fcfa(m.montant)}</td></tr>
+              <tr key={m.nom}><td>{m.nom}{m.remboursements > 0 && <small> (dont {fcfa(m.remboursements)} de crédits remboursés)</small>}</td><td>{fcfa(m.montant)}</td></tr>
             ))}
           </tbody>
         </table>
-        <p className="info">« Crédit » = montant vendu à crédit, pas encore encaissé.</p>
-        {resume.remboursements > 0 && <p className="info">Remboursements de crédit reçus sur la période : <strong>{fcfa(resume.remboursements)}</strong></p>}
+        <p className="info">Ventes et crédits remboursés, comme à la clôture de caisse. « Crédit » = montant vendu à crédit, pas encore encaissé.{resume.remboursements > 0 && <> Crédits remboursés sur la période : <strong>{fcfa(resume.remboursements)}</strong>.</>}</p>
       </div>
 
       {serveurs.some((b) => b.tickets > 0) && (

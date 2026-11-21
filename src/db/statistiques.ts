@@ -1,14 +1,16 @@
 import { seuilEffectif } from './stock'
 import { db } from './base'
 import { stockParArticle } from './stock'
+import { bornesJournee, DEBUT_JOURNEE_DEFAUT, journeeDe } from './journee'
 
 export interface Resume {
   chiffreAffaires: number // net : les annulations sont déduites
   marge: number // chiffre d'affaires − coût d'achat des produits vendus (coût figé sur la ligne)
   tickets: number // tickets valides (ni annulés, ni contre-tickets)
   panierMoyen: number
-  parMode: { nom: string; montant: number }[]
-  remboursements: number // dettes de clients encaissées pendant la période
+  // Argent reçu par mode, comme à la clôture : ventes + crédits remboursés pendant la période.
+  parMode: { nom: string; montant: number; remboursements: number }[]
+  remboursements: number // dettes de clients encaissées pendant la période (déjà comprises dans parMode)
   meilleurs: { designation: string; quantite: number; montant: number }[]
 }
 
@@ -19,8 +21,8 @@ export async function resumePeriode(debut: string, fin: string): Promise<Resume>
   const lignes = await db.lignesVente.where('venteId').anyOf(ids).toArray()
   const encaissements = await db.encaissements.where('venteId').anyOf(ids).toArray()
   const modes = await db.modesPaiement.toCollection().sortBy('ordre')
-  const remboursements = (await db.encaissements.where('date').between(debut, fin, true, false).filter((e) => e.type === 'remboursement_credit').toArray())
-    .reduce((s, e) => s + e.montant, 0)
+  const rembourses = await db.encaissements.where('date').between(debut, fin, true, false).filter((e) => e.type === 'remboursement_credit').toArray()
+  const remboursements = rembourses.reduce((s, e) => s + e.montant, 0)
 
   // Un contre-ticket a des quantités négatives : en additionnant tout, l'annulation s'efface d'elle-même.
   const chiffreAffaires = ventes.reduce((s, v) => s + v.total, 0)
@@ -42,29 +44,31 @@ export async function resumePeriode(debut: string, fin: string): Promise<Resume>
     marge,
     tickets,
     panierMoyen: tickets ? Math.round(chiffreAffaires / tickets) : 0,
-    parMode: modes.map((m) => ({
-      nom: m.nom,
-      montant: encaissements.filter((e) => e.modePaiementId === m.id).reduce((s, e) => s + e.montant, 0),
-    })),
+    parMode: modes.map((m) => {
+      const r = rembourses.filter((e) => e.modePaiementId === m.id).reduce((s, e) => s + e.montant, 0)
+      return { nom: m.nom, montant: encaissements.filter((e) => e.modePaiementId === m.id).reduce((s, e) => s + e.montant, 0) + r, remboursements: r }
+    }),
     meilleurs,
     remboursements,
   }
 }
 
 // Chiffre d'affaires de chacun des 7 derniers jours (aujourd'hui compris).
-export async function ventesSeptJours(): Promise<{ jour: Date; montant: number }[]> {
-  const jours: { jour: Date; montant: number }[] = []
+// Les jours sont des journées commerciales (une vente à 2 h du matin compte la veille), comme à la clôture.
+export async function ventesSeptJours(debut = DEBUT_JOURNEE_DEFAUT): Promise<{ jour: Date; montant: number }[]> {
+  const jours: { jour: Date; cle: string; montant: number }[] = []
+  const aujourdhui = journeeDe(new Date(), debut)
   for (let i = 6; i >= 0; i--) {
-    const d = debutDuJour(); d.setDate(d.getDate() - i)
-    jours.push({ jour: d, montant: 0 })
+    const [a, m, j] = aujourdhui.split('-').map(Number)
+    const d = new Date(a, m - 1, j - i)
+    jours.push({ jour: d, cle: journeeDe(new Date(a, m - 1, j - i, debut), debut), montant: 0 })
   }
-  const ventes = await db.ventes.where('date').aboveOrEqual(jours[0].jour.toISOString()).toArray()
+  const ventes = await db.ventes.where('date').aboveOrEqual(bornesJournee(jours[0].cle, debut).du).toArray()
   for (const v of ventes) {
-    const d = new Date(v.date); d.setHours(0, 0, 0, 0)
-    const j = jours.find((x) => x.jour.getTime() === d.getTime())
+    const j = jours.find((x) => x.cle === journeeDe(v.date, debut))
     if (j) j.montant += v.total
   }
-  return jours
+  return jours.map(({ jour, montant }) => ({ jour, montant }))
 }
 
 export interface EtatStock {
