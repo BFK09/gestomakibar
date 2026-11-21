@@ -492,3 +492,5 @@ input, select, textarea { border-radius: 12px !important; }
 .bandeau-serveur { border-radius: 14px; font-weight: 700; }
 
 .mise-a-jour { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+.tuile-boisson-format { font-size: 0.78rem; font-weight: 700; color: var(--doux); margin-top: -4px; }
