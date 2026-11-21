@@ -40,7 +40,7 @@ export default function Clients() {
   return (
     <section>
       <div className="entete-ecran">
-        <h2>Clients</h2>
+        <h2>Crédits clients</h2>
         <button className="principal" onClick={() => setOuvert('nouveau')}>+ Nouveau client</button>
       </div>
       <div className="tuiles">

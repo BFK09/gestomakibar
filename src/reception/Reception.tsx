@@ -8,7 +8,7 @@ export default function Reception() {
   return (
     <section>
       <div className="entete-ecran">
-        <h2>Réception de marchandise</h2>
+        <h2>Réception de boissons</h2>
       </div>
       <div className="onglets">
         <button className={onglet === 'nouvelle' ? 'choisi' : ''} onClick={() => setOnglet('nouvelle')}>

@@ -30,14 +30,15 @@ export async function dettesParClient(): Promise<Map<string, number>> {
 }
 
 // Le client règle tout ou partie de sa dette. Renvoie l'encaissement créé (pour le reçu).
-export async function enregistrerRemboursement(clientId: string, montant: number, modePaiementId: string): Promise<Encaissement> {
+// serveurId : qui a reçu l'argent (il le remettra à la clôture de caisse).
+export async function enregistrerRemboursement(clientId: string, montant: number, modePaiementId: string, serveurId?: string): Promise<Encaissement> {
   return db.transaction('rw', [db.encaissements, db.modesPaiement, db.clients], async () => {
     if (!Number.isInteger(montant) || montant <= 0) throw new Error('Le montant doit être un nombre entier supérieur à 0.')
     const mode = await db.modesPaiement.get(modePaiementId)
     if (!mode || mode.nature === 'credit') throw new Error('Choisis comment le client paie (espèces, mobile money…).')
     const dette = await detteClient(clientId)
     if (montant > dette) throw new Error(`Le client ne doit que ${fcfa(dette)}.`)
-    const e: Encaissement = { id: nouvelId(), date: new Date().toISOString(), type: 'remboursement_credit', modePaiementId, montant, clientId }
+    const e: Encaissement = { id: nouvelId(), date: new Date().toISOString(), type: 'remboursement_credit', modePaiementId, montant, clientId, serveurId }
     await db.encaissements.add(e)
     return e
   })

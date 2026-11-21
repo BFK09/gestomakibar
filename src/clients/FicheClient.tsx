@@ -18,6 +18,7 @@ export default function FicheClient({ clientId, onFermer }: Props) {
   const [message, setMessage] = useState('')
   const [montant, setMontant] = useState('')
   const [modeId, setModeId] = useState('')
+  const [serveurId, setServeurId] = useState('')
   const [recu, setRecu] = useState<Encaissement | null>(null)
 
   const d = useLiveQuery(async () => ({
@@ -27,6 +28,7 @@ export default function FicheClient({ clientId, onFermer }: Props) {
     depuis: estNouveau ? null : await debutDeLaDette(clientId),
     modes: (await db.modesPaiement.toCollection().sortBy('ordre')).filter((m) => m.actif && m.nature !== 'credit'),
     boutique: await db.boutique.get('principale'),
+    serveurs: await db.serveurs.orderBy('nom').filter((s) => s.actif).toArray(),
   }), [clientId])
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function FicheClient({ clientId, onFermer }: Props) {
   }, [d?.client?.id])
 
   if (!d) return <p>Chargement…</p>
-  const { client, dette, historique, modes, boutique, depuis } = d
+  const { client, dette, historique, modes, boutique, depuis, serveurs } = d
   const jours = depuis ? joursDepuis(depuis) : 0
 
   async function enregistrer() {
@@ -61,8 +63,9 @@ export default function FicheClient({ clientId, onFermer }: Props) {
   async function rembourser() {
     setErreur(''); setMessage('')
     const m = lireEntier(montant)
+    if (serveurs.length > 0 && !serveurId) { setErreur("Choisis qui reçoit l'argent (il le remettra à la clôture)."); return }
     try {
-      const e = await enregistrerRemboursement(clientId, m ?? 0, modeId || modes[0]?.id)
+      const e = await enregistrerRemboursement(clientId, m ?? 0, modeId || modes[0]?.id, serveurId || undefined)
       setMontant('')
       setRecu(e)
     } catch (x) {
@@ -122,6 +125,12 @@ export default function FicheClient({ clientId, onFermer }: Props) {
                 </select>
                 <input inputMode="numeric" value={montant} onChange={(e) => setMontant(e.target.value)} placeholder={`max ${dette}`} />
               </div>
+              {serveurs.length > 0 && (
+                <select value={serveurId} onChange={(e) => setServeurId(e.target.value)} aria-label="Reçu par">
+                  <option value="">Reçu par… (serveur)</option>
+                  {serveurs.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
+                </select>
+              )}
               <div className="boutons gauche">
                 <button onClick={() => setMontant(String(dette))}>Tout ({fcfa(dette)})</button>
                 <button className="principal" onClick={rembourser}>Encaisser</button>
