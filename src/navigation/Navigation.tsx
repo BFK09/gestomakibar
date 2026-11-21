@@ -61,7 +61,7 @@ export default function Navigation({ nomBoutique, ecran, onChoisir }: Props) {
         })}
         <button className={dansPlus || plusOuvert ? 'actif' : ''} onClick={() => setPlusOuvert(!plusOuvert)} aria-expanded={plusOuvert}>
           <span className="pastille">{dansPlus ? <actuel.icone size={22} strokeWidth={2.4} /> : <Menu size={22} strokeWidth={1.9} />}</span>
-          <span>{dansPlus ? actuel.court : 'Plus'}</span>
+          <span>Plus</span>
         </button>
       </nav>
 

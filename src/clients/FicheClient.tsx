@@ -84,6 +84,7 @@ export default function FicheClient({ clientId, onFermer }: Props) {
           <p className="ticket-total">MONTANT REÇU <span>{fcfa(recu.montant)}</span></p>
           <p className="ticket-ligne">{modes.find((m) => m.id === recu.modePaiementId)?.nom} <span>{fcfa(recu.montant)}</span></p>
           <p className="ticket-ligne">Reste à payer <span>{fcfa(dette)}</span></p>
+          {recu.serveurId && <p>Reçu par : {serveurs.find((s) => s.id === recu.serveurId)?.nom}</p>}
           <p className="ticket-merci">Merci !</p>
         </div>
         <div className="boutons sans-impression">
