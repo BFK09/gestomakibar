@@ -11,7 +11,7 @@ import { MessageCircle, Printer } from 'lucide-react'
 interface Props {
   venteId: string
   onNouvelleVente?: () => void
-  onRefaire?: (lignes: LignePanier[]) => void // recharge les articles dans la caisse
+  onRefaire?: (lignes: LignePanier[]) => void // recharge les produits dans la caisse
 }
 
 // Le ticket d'une vente, prêt à être imprimé, avec la possibilité de l'annuler.
@@ -86,7 +86,7 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
       await annulerVente(venteId)
       setConfirmer(false)
       if (puisRefaire && onRefaire) {
-        // On recharge les articles actuels (avec leur prix du moment) dans la caisse.
+        // On recharge les produits actuels (avec leur prix du moment) dans la caisse.
         const articles = await db.articles.bulkGet(lignes.map((l) => l.articleId))
         onRefaire(lignes.flatMap((l, i) => (articles[i] ? [{ article: articles[i]!, quantite: l.quantite }] : [])))
       }
@@ -133,7 +133,7 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
 
       {retour ? (
         <div className="confirmation sans-impression">
-          <p><strong>Retour d'articles</strong> : indique combien le client rapporte. Le stock revient et l'argent lui est rendu.</p>
+          <p><strong>Retour de produits</strong> : indique combien le client rapporte. Le stock revient et l'argent lui est rendu.</p>
           <table className="tableau-simple">
             <tbody>
               {lignes.map((l) => {
@@ -161,7 +161,7 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
       ) : confirmer ? (
         <div className="confirmation sans-impression">
           <p>
-            Annuler le ticket n° {vente.numero} ({fcfa(vente.total)}) ? Les articles reviennent en stock
+            Annuler le ticket n° {vente.numero} ({fcfa(vente.total)}) ? Les produits reviennent en stock
             et le montant est compté comme rendu au client. Le ticket reste visible, marqué « annulé ».
           </p>
           <div className="boutons">
@@ -174,7 +174,7 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
         <div className="boutons sans-impression">
           <button onClick={() => window.print()}><Printer size={18} /> Imprimer</button>
           <button onClick={() => ouvrirWhatsApp(texteTicket(), client?.telephone)}><MessageCircle size={18} /> WhatsApp</button>
-          {peutRetourner && <button onClick={() => { setErreur(''); setRetour({}) }}>Retour d'articles…</button>}
+          {peutRetourner && <button onClick={() => { setErreur(''); setRetour({}) }}>Retour de produits…</button>}
           {peutRetourner && retours.length === 0 && <button className="danger" onClick={() => setConfirmer(true)}>Annuler ce ticket…</button>}
           {onNouvelleVente && <button className="principal" onClick={onNouvelleVente}>Nouvelle vente</button>}
         </div>

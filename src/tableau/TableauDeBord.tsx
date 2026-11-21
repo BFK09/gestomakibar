@@ -116,8 +116,8 @@ export default function TableauDeBord({ onVoirCatalogue }: { onVoirCatalogue: ()
         )}
         {stock.sansSeuil > 0 && (
           <p className="info">
-            {stock.sansSeuil} produit(s) n'ont pas de seuil d'alerte et ne seront jamais signalés.{' '}
-            <button className="lien-bouton" onClick={onVoirCatalogue}>Les régler dans le Catalogue</button>
+            {stock.sansSeuil} produit(s) utilisent le seuil par défaut (un casier, ou 10).{' '}
+            <button className="lien-bouton" onClick={onVoirCatalogue}>Régler les seuils dans Produits</button>
           </p>
         )}
         <p className="info">Valeur du stock (au prix d'achat) : <strong>{fcfa(stock.valeurAchat)}</strong></p>

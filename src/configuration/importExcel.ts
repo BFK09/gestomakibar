@@ -8,7 +8,7 @@ import { monnaie } from '../outils/pays'
 import { sansAccents } from '../outils/texte'
 
 // Le fichier Excel de l'étape 2 de l'assistant : à télécharger, remplir dans Excel, puis importer.
-// Il reprend le catalogue standard ; on peut aussi ajouter des lignes pour de nouveaux produits.
+// Il reprend les produits standard ; on peut aussi ajouter des lignes pour de nouveaux produits.
 
 export interface Saisie { stock: string; prixAchat: string; prixVente: string }
 

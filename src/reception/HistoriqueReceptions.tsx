@@ -27,7 +27,7 @@ export default function HistoriqueReceptions() {
               <span className="code">{new Date(a.date).toLocaleDateString('fr-FR')}</span>
               <span className="nom">
                 {(a.fournisseurId && donnees.fournisseurs.get(a.fournisseurId)) || 'Fournisseur non précisé'}
-                <small>{a.reference ? `Réf. ${a.reference} · ` : ''}{lignes.length} article(s)</small>
+                <small>{a.reference ? `Réf. ${a.reference} · ` : ''}{lignes.length} produit(s)</small>
               </span>
               <span className="chiffres">{fcfa(a.total)}</span>
             </button>

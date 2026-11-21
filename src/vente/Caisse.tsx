@@ -17,7 +17,7 @@ export interface LignePanier { article: Article; quantite: number }
 interface PaiementSaisi { modePaiementId: string; montant: string }
 
 interface Props {
-  panierDepart: LignePanier[] // vide, ou les articles d'un ticket annulé à refaire
+  panierDepart: LignePanier[] // vide, ou les produits d'un ticket annulé à refaire
   onRefaire: (lignes: LignePanier[]) => void
   onAllerAuxServeurs: () => void
 }
@@ -148,7 +148,7 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
       <label className="recherche-article">
         Chercher une boisson
         <span className="avec-scan">
-          <input type="search" value={recherche} onChange={(e) => { setRecherche(e.target.value); setErreurScan('') }} placeholder="Tape ou scanne un code, ou un nom…" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const a = articleScanne(articles!, recherche, suggestions); if (a) ajouter(a); else if (recherche.trim()) setErreurScan(`Aucun article ne correspond à « ${recherche.trim()} ».`) } }} />
+          <input type="search" value={recherche} onChange={(e) => { setRecherche(e.target.value); setErreurScan('') }} placeholder="Tape ou scanne un code, ou un nom…" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const a = articleScanne(articles!, recherche, suggestions); if (a) ajouter(a); else if (recherche.trim()) setErreurScan(`Aucun produit ne correspond à « ${recherche.trim()} ».`) } }} />
           <button type="button" className="bouton-scan" onClick={() => setScan(true)} aria-label="Scanner avec la caméra"><ScanBarcode size={20} /></button>
         </span>
         {erreurScan && <small className="alerte">{erreurScan}</small>}
@@ -159,7 +159,7 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
               setScan(false)
               const a = articleScanne(articles!, c, [])
               if (a) ajouter(a)
-              else setErreurScan(`Aucun article n'a le code-barres ${c}. Ajoute-le dans la fiche de l'article (Catalogue).`)
+              else setErreurScan(`Aucun produit n'a le code-barres ${c}. Ajoute-le dans la fiche de le produit (Produits).`)
             }}
           />
         )}

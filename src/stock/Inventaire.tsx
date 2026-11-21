@@ -9,7 +9,7 @@ import { sansAccents } from '../outils/texte'
 import { texteRecherche } from '../outils/codeBarre'
 
 // Écran Inventaire : on compte ce qu'il y a sur les étagères et on le saisit.
-// On peut compter une catégorie à la fois ; seuls les articles remplis sont enregistrés.
+// On peut compter une catégorie à la fois ; seuls les produits remplis sont enregistrés.
 export default function Inventaire() {
   const [recherche, setRecherche] = useState('')
   const [categorieId, setCategorieId] = useState('')
@@ -42,7 +42,7 @@ export default function Inventaire() {
     setErreurs(pb)
     if (pb.length > 0) return
     const ecarts = await enregistrerInventaire(lignes)
-    setMessage(`Inventaire enregistré : ${lignes.length} article(s) compté(s), ${ecarts} stock(s) corrigé(s).`)
+    setMessage(`Inventaire enregistré : ${lignes.length} produit(s) compté(s), ${ecarts} stock(s) corrigé(s).`)
     setComptes({}); setCouts({})
   }
 
@@ -50,7 +50,7 @@ export default function Inventaire() {
     <section>
       <div className="entete-ecran"><h2>Inventaire</h2></div>
       <p className="info">
-        Compte les articles sur les étagères et tape la quantité trouvée. L'application corrige
+        Compte les produits sur les étagères et tape la quantité trouvée. L'application corrige
         le stock en ajoutant l'écart au journal. Tu peux faire une catégorie à la fois.
       </p>
       {message && <p className="succes">{message}</p>}
@@ -91,7 +91,7 @@ export default function Inventaire() {
       {erreurs.length > 0 && <ul className="erreurs">{erreurs.map((x) => <li key={x}>{x}</li>)}</ul>}
 
       <div className="pied-reception pied-collant">
-        <span>{remplis.length} article(s) compté(s)</span>
+        <span>{remplis.length} produit(s) compté(s)</span>
         <button className="principal" onClick={enregistrer} disabled={remplis.length === 0}>Enregistrer l'inventaire</button>
       </div>
     </section>

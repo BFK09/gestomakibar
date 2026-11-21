@@ -4,7 +4,7 @@ export interface LigneReception {
   articleId: string
   quantite: number
   coutUnitaire: number // prix d'achat d'une unité
-  prixVente?: number // facultatif : seulement si l'article n'a pas encore de prix
+  prixVente?: number // facultatif : seulement si le produit n'a pas encore de prix
 }
 
 export interface Reception {
@@ -30,7 +30,7 @@ export function coutMoyenApres(
 // Enregistre une réception complète. Tout se fait dans une "transaction" :
 // soit tout est enregistré, soit rien (pas de réception à moitié écrite).
 export async function enregistrerReception(r: Reception): Promise<string> {
-  if (r.lignes.length === 0) throw new Error('La réception ne contient aucun article.')
+  if (r.lignes.length === 0) throw new Error('La réception ne contient aucun produit.')
 
   return db.transaction(
     'rw',
@@ -63,7 +63,7 @@ export async function enregistrerReception(r: Reception): Promise<string> {
         await db.lignesAchat.add({ id: nouvelId(), achatId, articleId: l.articleId, quantite: l.quantite, coutUnitaire: l.coutUnitaire })
         await db.mouvementsStock.add({ id: nouvelId(), date: r.date, articleId: l.articleId, quantite: l.quantite, type: 'achat', documentId: achatId })
 
-        // 5. Mise à jour de l'article : coût moyen, fournisseur habituel, prix si absent.
+        // 5. Mise à jour de le produit : coût moyen, fournisseur habituel, prix si absent.
         await db.articles.update(l.articleId, {
           coutMoyen: coutMoyenApres(stockAvant, article.coutMoyen, l.quantite, l.coutUnitaire),
           fournisseurId: article.fournisseurId ?? fournisseurId,

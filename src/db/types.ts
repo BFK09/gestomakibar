@@ -100,7 +100,7 @@ export interface Vente {
   // Une vente n'est jamais modifiée ni supprimée. Pour l'annuler, on crée un
   // contre-ticket (montants et quantités négatifs) qui pointe vers elle.
   annuleVenteId?: string // rempli seulement sur un contre-ticket (annulation complète)
-  retourVenteId?: string // rempli seulement sur un ticket de retour (une partie des articles rapportés)
+  retourVenteId?: string // rempli seulement sur un ticket de retour (une partie des produits rapportés)
 }
 
 // Valeurs figées : prix, coût et catégorie sont copiés au moment de la vente.
@@ -147,7 +147,7 @@ export interface LigneAchat {
 }
 
 // Le stock est un journal : chaque entrée (+) ou sortie (-) est une ligne.
-// Le stock d'un article = la somme de ses quantités.
+// Le stock d'un produit = la somme de ses quantités.
 export interface MouvementStock {
   id: string
   date: string

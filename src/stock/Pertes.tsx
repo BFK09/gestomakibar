@@ -38,7 +38,7 @@ export default function Pertes() {
 
   async function enregistrer() {
     setErreur(''); setMessage('')
-    if (!article) return setErreur('Choisis un article.')
+    if (!article) return setErreur('Choisis un produit.')
     try {
       const texteMotif = precision.trim() ? `${motif} – ${precision.trim()}` : motif
       await enregistrerPerte(article.id, q ?? 0, texteMotif)

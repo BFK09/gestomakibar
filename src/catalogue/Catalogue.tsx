@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/base'
-import { stockParArticle } from '../db/stock'
+import { seuilEffectif, stockEnCasiers, stockParArticle } from '../db/stock'
 import { fcfa } from '../outils/format'
 import { texteRecherche } from '../outils/codeBarre'
 import FicheArticle from './FicheArticle'
 
-// Écran Catalogue : la liste des articles, avec recherche et filtres.
+// Écran Catalogue : la liste des produits, avec recherche et filtres.
 export default function Catalogue() {
   const [recherche, setRecherche] = useState('')
   const [categorieId, setCategorieId] = useState('') // '' = toutes
@@ -25,7 +25,7 @@ export default function Catalogue() {
   const texte = sansAccents(recherche.trim())
   const sansPrix = articles.filter((a) => a.actif && a.prixVente === null).length
 
-  // On garde seulement les articles qui correspondent aux filtres choisis.
+  // On garde seulement les produits qui correspondent aux filtres choisis.
   const visibles = articles.filter((a) => {
     if (!voirInactifs && !a.actif) return false
     if (categorieId && a.categorieId !== categorieId) return false
@@ -37,9 +37,9 @@ export default function Catalogue() {
   return (
     <section>
       <div className="entete-ecran">
-        <h2>Catalogue</h2>
+        <h2>Produits</h2>
         <button className="principal" onClick={() => setOuvert('nouveau')}>
-          + Nouvel article
+          + Nouveau produit
         </button>
       </div>
 
@@ -74,12 +74,12 @@ export default function Catalogue() {
         </label>
       </div>
 
-      <p className="compte">{visibles.length} article(s)</p>
+      <p className="compte">{visibles.length} produit(s)</p>
 
       <ul className="liste-articles">
         {visibles.map((a) => {
           const stock = stocks.get(a.id) ?? 0
-          const alerte = a.seuilAlerte !== null && stock <= a.seuilAlerte
+          const alerte = stock <= seuilEffectif(a)
           return (
             <li key={a.id}>
               <button className={a.actif ? '' : 'inactif'} onClick={() => setOuvert(a.id)}>
@@ -90,7 +90,7 @@ export default function Catalogue() {
                 </span>
                 <span className="chiffres">
                   {a.prixVente === null ? <em className="a-saisir">Prix à saisir</em> : fcfa(a.prixVente)}
-                  <small className={alerte ? 'alerte' : ''}>Stock : {stock}</small>
+                  <small className={alerte ? 'alerte' : ''}>Stock : {stockEnCasiers(stock, a.tailleCasier)}</small>
                 </span>
               </button>
             </li>

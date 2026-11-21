@@ -46,7 +46,7 @@ export default function EtatDuStock({ nomBoutique }: { nomBoutique: string }) {
         <table className="table-rapport">
           <thead>
             <tr>
-              <th>Code</th><th>Article</th><th className="nombre">Stock</th>
+              <th>Code</th><th>Produit</th><th className="nombre">Stock</th>
               {feuilleComptage ? <th className="nombre">Compté</th> : <><th className="nombre">Coût unit.</th><th className="nombre">Valeur</th></>}
             </tr>
           </thead>

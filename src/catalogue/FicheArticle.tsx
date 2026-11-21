@@ -28,7 +28,7 @@ interface Saisie {
   actif: boolean
 }
 
-// Fiche d'un article : ajout (articleId = 'nouveau') ou modification.
+// Fiche d'un produit : ajout (articleId = 'nouveau') ou modification.
 export default function FicheArticle({ articleId, onFermer }: Props) {
   const estNouveau = articleId === 'nouveau'
   const categories = useLiveQuery(() => db.categories.orderBy('nom').toArray(), [])
@@ -42,7 +42,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
   const [codeModifieALaMain, setCodeModifieALaMain] = useState(false)
   const [scan, setScan] = useState(false)
 
-  // Au chargement : on remplit le formulaire avec l'article, ou des valeurs vides.
+  // Au chargement : on remplit le formulaire avec le produit, ou des valeurs vides.
   useEffect(() => {
     if (estNouveau) {
       setSaisie({ code: '', codeBarre: '', designation: '', categorieId: '', unite: 'bouteille', format: '', tailleCasier: '', prixVente: '', seuilAlerte: '', actif: true })
@@ -78,7 +78,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
   const changer = (champ: keyof Saisie, valeur: string | boolean) =>
     setSaisie({ ...saisie, [champ]: valeur })
 
-  // Nouvel article : quand on choisit la catégorie, le code se remplit tout seul.
+  // Nouveau produit : quand on choisit la catégorie, le code se remplit tout seul.
   async function choisirCategorie(id: string) {
     const suite: Saisie = { ...saisie!, categorieId: id }
     if (estNouveau && !codeModifieALaMain && id) {

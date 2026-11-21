@@ -150,7 +150,7 @@ export async function quantitesRetournees(venteId: string): Promise<Map<string, 
   return q
 }
 
-// Retour partiel : le client rapporte une partie des articles d'un ticket.
+// Retour partiel : le client rapporte une partie des produits d'un ticket.
 // On crée un ticket de retour (quantités et montant négatifs, prix d'origine),
 // le stock revient, et l'argent est rendu par le mode choisi
 // (si c'est le mode « crédit », la dette du client diminue).

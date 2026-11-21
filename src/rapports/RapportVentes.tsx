@@ -9,7 +9,7 @@ import { bornesPeriode, jourLocal, libellePeriode, NOMS_PERIODES, type Periode }
 
 type Regroupement = 'article' | 'categorie' | 'jour' | 'detail'
 const NOMS_REGROUPEMENTS: Record<Regroupement, string> = {
-  article: 'Par article',
+  article: 'Par produit',
   categorie: 'Par catégorie',
   jour: 'Par jour',
   detail: 'Ligne par ligne',
@@ -76,7 +76,7 @@ export default function RapportVentes({ nomBoutique }: { nomBoutique: string }) 
       largeurs: [40, 12, 16, 16, 16, 10],
       lignes: [
         ...entete,
-        [regroupement === 'article' ? 'Article' : regroupement === 'categorie' ? 'Catégorie' : 'Jour', 'Quantité', "Chiffre d'affaires", 'Coût', 'Marge', 'Marge %'],
+        [regroupement === 'article' ? 'Produit' : regroupement === 'categorie' ? 'Catégorie' : 'Jour', 'Quantité', "Chiffre d'affaires", 'Coût', 'Marge', 'Marge %'],
         ...liste.map((g) => [g.libelle, g.quantite, g.montant, g.cout, g.montant - g.cout, g.montant ? Math.round(((g.montant - g.cout) / g.montant) * 1000) / 10 : null]),
         ['TOTAL', total.quantite, total.montant, total.cout, total.montant - total.cout, total.montant ? Math.round(((total.montant - total.cout) / total.montant) * 1000) / 10 : null],
       ],
@@ -145,7 +145,7 @@ export default function RapportVentes({ nomBoutique }: { nomBoutique: string }) 
       ) : regroupement === 'detail' ? (
         <div className="table-defilante">
           <table className="table-rapport">
-            <thead><tr><th>Date</th><th>Ticket</th><th>Article</th><th className="nombre">Qté</th><th className="nombre">Montant</th><th className="nombre">Marge</th></tr></thead>
+            <thead><tr><th>Date</th><th>Ticket</th><th>Produit</th><th className="nombre">Qté</th><th className="nombre">Montant</th><th className="nombre">Marge</th></tr></thead>
             <tbody>
               {lignes.map((l) => (
                 <tr key={l.id} className={l.nature !== 'vente' ? 'ligne-retour' : ''}>
@@ -164,7 +164,7 @@ export default function RapportVentes({ nomBoutique }: { nomBoutique: string }) 
       ) : (
         <div className="table-defilante">
           <table className="table-rapport">
-            <thead><tr><th>{regroupement === 'article' ? 'Article' : regroupement === 'categorie' ? 'Catégorie' : 'Jour'}</th><th className="nombre">Qté</th><th className="nombre">Chiffre d'affaires</th><th className="nombre">Coût</th><th className="nombre">Marge</th><th className="nombre">%</th></tr></thead>
+            <thead><tr><th>{regroupement === 'article' ? 'Produit' : regroupement === 'categorie' ? 'Catégorie' : 'Jour'}</th><th className="nombre">Qté</th><th className="nombre">Chiffre d'affaires</th><th className="nombre">Coût</th><th className="nombre">Marge</th><th className="nombre">%</th></tr></thead>
             <tbody>
               {liste.map((g) => (
                 <tr key={g.cle}>
@@ -182,7 +182,7 @@ export default function RapportVentes({ nomBoutique }: { nomBoutique: string }) 
         </div>
       )}
 
-      <p className="info">La marge = prix de vente − coût moyen d'achat au moment de la vente. Un article vendu sans prix d'achat connu compte avec un coût de 0.</p>
+      <p className="info">La marge = prix de vente − coût moyen d'achat au moment de la vente. Un produit vendu sans prix d'achat connu compte avec un coût de 0.</p>
       <div className="boutons gauche">
         <BoutonPdf />
         <button className="sans-impression" onClick={exporterExcel} disabled={lignes.length === 0}>Télécharger en Excel</button>

@@ -80,7 +80,7 @@ export default function JournalMouvements({ nomBoutique }: { nomBoutique: string
         <div className="table-defilante">
           <table className="table-rapport">
             <thead>
-              <tr><th>Date</th><th>Document</th><th>Article</th><th className="nombre">Entrée</th><th className="nombre">Sortie</th></tr>
+              <tr><th>Date</th><th>Document</th><th>Produit</th><th className="nombre">Entrée</th><th className="nombre">Sortie</th></tr>
             </thead>
             <tbody>
               {visibles.map((l) => (

@@ -3,15 +3,15 @@ import { db, nouvelId } from './base'
 export interface LigneComptee {
   articleId: string
   quantiteComptee: number // ce qu'on a réellement compté sur l'étagère
-  coutUnitaire?: number // facultatif : coût d'achat, si l'article n'en a pas encore
+  coutUnitaire?: number // facultatif : coût d'achat, si le produit n'en a pas encore
 }
 
-// Enregistre un inventaire. Pour chaque article compté :
+// Enregistre un inventaire. Pour chaque produit compté :
 // écart = quantité comptée − stock calculé par l'application.
 // Cet écart est ajouté au journal (mouvement « inventaire »), donc le stock
 // affiché devient égal au comptage, sans jamais effacer l'historique.
 export async function enregistrerInventaire(lignes: LigneComptee[], note?: string): Promise<number> {
-  if (lignes.length === 0) throw new Error("Aucun article n'a été compté.")
+  if (lignes.length === 0) throw new Error("Aucun produit n'a été compté.")
   return db.transaction('rw', [db.inventaires, db.lignesInventaire, db.mouvementsStock, db.articles], async () => {
     const inventaireId = nouvelId()
     const date = new Date().toISOString()

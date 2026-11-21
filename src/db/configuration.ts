@@ -21,7 +21,7 @@ export async function terminerConfiguration(
     const date = new Date().toISOString()
     const choisis = new Map(produits.map((p) => [p.articleId, p]))
 
-    // Les articles non choisis restent dans la base, mais inactifs (réactivables dans le Catalogue).
+    // Les produits non choisis restent dans la base, mais inactifs (réactivables dans Produits).
     await db.articles.toCollection().modify((a) => {
       const p = choisis.get(a.id)
       a.actif = !!p

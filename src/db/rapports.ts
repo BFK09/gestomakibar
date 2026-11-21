@@ -1,3 +1,4 @@
+import { seuilEffectif } from './stock'
 import { db } from './base'
 import { stockParArticle } from './stock'
 import type { MouvementStock } from './types'
@@ -87,7 +88,7 @@ export async function etatStock(): Promise<LigneEtatStock[]> {
   const stocks = await stockParArticle()
   return articles.map((a) => ({
     code: a.code, designation: a.designation, categorieId: a.categorieId,
-    stock: stocks.get(a.id) ?? 0, coutMoyen: a.coutMoyen, prixVente: a.prixVente, seuilAlerte: a.seuilAlerte,
+    stock: stocks.get(a.id) ?? 0, coutMoyen: a.coutMoyen, prixVente: a.prixVente, seuilAlerte: seuilEffectif(a),
   }))
 }
 

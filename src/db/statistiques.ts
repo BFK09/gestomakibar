@@ -1,9 +1,10 @@
+import { seuilEffectif } from './stock'
 import { db } from './base'
 import { stockParArticle } from './stock'
 
 export interface Resume {
   chiffreAffaires: number // net : les annulations sont déduites
-  marge: number // chiffre d'affaires − coût d'achat des articles vendus (coût figé sur la ligne)
+  marge: number // chiffre d'affaires − coût d'achat des produits vendus (coût figé sur la ligne)
   tickets: number // tickets valides (ni annulés, ni contre-tickets)
   panierMoyen: number
   parMode: { nom: string; montant: number }[]
@@ -81,8 +82,8 @@ export async function etatDuStock(): Promise<EtatStock> {
   for (const a of articles) {
     const s = stocks.get(a.id) ?? 0
     if (s > 0) valeurAchat += s * (a.coutMoyen ?? 0)
-    if (s < 0 || (a.seuilAlerte !== null && s <= a.seuilAlerte)) {
-      alertes.push({ code: a.code, designation: a.designation, stock: s, seuil: a.seuilAlerte })
+    if (s < 0 || s <= seuilEffectif(a)) {
+      alertes.push({ code: a.code, designation: a.designation, stock: s, seuil: seuilEffectif(a) })
     }
   }
   alertes.sort((x, y) => x.stock - y.stock)

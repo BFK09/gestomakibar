@@ -274,13 +274,13 @@ export default function Configuration() {
               {identite.adresse && <><br />{identite.adresse}</>}</p>
             <div className="resume-jour">
               <div><small>Produits choisis</small><strong>{produits.length}</strong></div>
-              <div><small>Articles en stock</small><strong>{produits.reduce((s, p) => s + p.stock, 0)}</strong></div>
+              <div><small>Bouteilles en stock</small><strong>{produits.reduce((s, p) => s + p.stock, 0)}</strong></div>
               <div><small>Valeur du stock (achat)</small><strong>{fcfa(valeurAchat)}</strong></div>
               <div><small>Valeur du stock (vente)</small><strong>{fcfa(valeurVente)}</strong></div>
             </div>
             <p className="info">
-              Les produits non cochés restent dans le catalogue, désactivés : tu pourras les activer plus tard.
-              Tout pourra être modifié ensuite dans le Catalogue.
+              Les produits non cochés restent dans les produits, désactivés : tu pourras les activer plus tard.
+              Tout pourra être modifié ensuite dans Produits.
             </p>
             {listeErreurs}
             <div className="boutons">

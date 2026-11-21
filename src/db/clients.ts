@@ -63,7 +63,7 @@ export async function historiqueClient(clientId: string): Promise<LigneHistoriqu
       lignes.push({ id: e.id, date: e.date, libelle: `Remboursement (${modes.get(e.modePaiementId)})`, credit: 0, remboursement: e.montant })
     } else if (e.modePaiementId === credit?.id) {
       const v = e.venteId ? ventes.get(e.venteId) : undefined
-      const libelle = v?.annuleVenteId ? `Annulation (ticket n° ${v.numero})` : v?.retourVenteId ? `Retour d'articles (ticket n° ${v.numero})` : `Achat à crédit (ticket n° ${v?.numero ?? '?'})`
+      const libelle = v?.annuleVenteId ? `Annulation (ticket n° ${v.numero})` : v?.retourVenteId ? `Retour de produits (ticket n° ${v.numero})` : `Achat à crédit (ticket n° ${v?.numero ?? '?'})`
       if (e.montant >= 0) lignes.push({ id: e.id, date: e.date, libelle, credit: e.montant, remboursement: 0 })
       else lignes.push({ id: e.id, date: e.date, libelle, credit: 0, remboursement: -e.montant })
     }
