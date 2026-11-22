@@ -12,9 +12,10 @@ export interface BilanServeur {
   mobileMoney: number
   credit: number // vendu à crédit (argent que le serveur n'a pas reçu)
   remboursements: number // crédits remboursés reçus par ce serveur (déjà compris dans especes / mobileMoney)
+  depenses: number // dépenses payées avec ses espèces (retirées de ce qu'il doit remettre)
   consignes: number // consignes d'emballages reçues (+) ou payées au fournisseur (−), déjà comprises dans especes / mobileMoney
   dejaCloture: number // espèces déjà comptées dans une clôture précédente de la même journée
-  attendu: number // espèces qu'il doit encore remettre = especes − dejaCloture
+  attendu: number // espèces qu'il doit encore remettre = especes − depenses − dejaCloture
   clotures: Cloture[]
 }
 
@@ -25,12 +26,13 @@ export async function debutJournee() {
 // Bilan de chaque serveur pour une journée : serveurs actifs + ceux qui ont vendu ce jour-là.
 export async function bilansJournee(journee: string): Promise<BilanServeur[]> {
   const { du, au } = bornesJournee(journee, await debutJournee())
-  const [serveurs, ventes, encaissements, modes, clotures] = await Promise.all([
+  const [serveurs, ventes, encaissements, modes, clotures, depenses] = await Promise.all([
     db.serveurs.toArray(),
     db.ventes.where('date').between(du, au, true, false).toArray(),
     db.encaissements.where('date').between(du, au, true, false).toArray(),
     db.modesPaiement.toArray(),
     db.clotures.where('journee').equals(journee).toArray(),
+    db.depenses.where('date').between(du, au, true, false).toArray(),
   ])
   const nature = new Map(modes.map((m) => [m.id, m.nature]))
   const annulees = new Set(ventes.map((v) => v.annuleVenteId).filter(Boolean))
@@ -41,7 +43,8 @@ export async function bilansJournee(journee: string): Promise<BilanServeur[]> {
     const sesEnc = encaissements.filter((e) => e.serveurId === s.id)
     const somme = (n: string) => sesEnc.filter((e) => nature.get(e.modePaiementId) === n).reduce((x, e) => x + e.montant, 0)
     const sesClotures = clotures.filter((c) => c.serveurId === s.id).sort((a, b) => a.date.localeCompare(b.date))
-    if (!s.actif && sesVentes.length === 0 && sesClotures.length === 0) continue
+    const sesDepenses = depenses.filter((d) => d.serveurId === s.id).reduce((x, d) => x + d.montant, 0)
+    if (!s.actif && sesVentes.length === 0 && sesClotures.length === 0 && sesDepenses === 0) continue
     const especes = somme('especes')
     const dejaCloture = sesClotures.reduce((x, c) => x + c.attendu, 0)
     bilans.push({
@@ -53,9 +56,10 @@ export async function bilansJournee(journee: string): Promise<BilanServeur[]> {
       mobileMoney: somme('mobile_money'),
       credit: somme('credit'),
       remboursements: sesEnc.filter((e) => e.type === 'remboursement_credit').reduce((x, e) => x + e.montant, 0),
+      depenses: sesDepenses,
       consignes: sesEnc.filter((e) => e.type === 'consigne').reduce((x, e) => x + e.montant, 0),
       dejaCloture,
-      attendu: especes - dejaCloture,
+      attendu: especes - sesDepenses - dejaCloture,
       clotures: sesClotures,
     })
   }
@@ -66,7 +70,7 @@ export async function bilansJournee(journee: string): Promise<BilanServeur[]> {
 // pour qu'il corresponde exactement aux ventes enregistrées.
 export async function cloturer(journee: string, serveurId: string, remis: number, note?: string): Promise<Cloture> {
   if (!Number.isInteger(remis) || remis < 0) throw new Error("L'argent remis doit être un nombre entier positif (0 si rien).")
-  return db.transaction('rw', [db.clotures, db.serveurs, db.ventes, db.encaissements, db.modesPaiement, db.boutique], async () => {
+  return db.transaction('rw', [db.clotures, db.serveurs, db.ventes, db.encaissements, db.modesPaiement, db.boutique, db.depenses], async () => {
     const bilan = (await bilansJournee(journee)).find((b) => b.serveurId === serveurId)
     if (!bilan) throw new Error('Serveur introuvable pour cette journée.')
     const cloture: Cloture = {

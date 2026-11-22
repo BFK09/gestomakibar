@@ -1,6 +1,6 @@
-import { Beer, BookOpen, ChartColumn, DatabaseBackup, LayoutDashboard, PackagePlus, Settings, Boxes, Users, UserRound, Calculator, Container, Truck, type LucideIcon } from 'lucide-react'
+import { Beer, BookOpen, ChartColumn, DatabaseBackup, LayoutDashboard, PackagePlus, Settings, Boxes, Users, UserRound, Calculator, Container, Truck, Wallet, type LucideIcon } from 'lucide-react'
 
-export type Ecran = 'tableau' | 'vente' | 'catalogue' | 'reception' | 'inventaire' | 'clients' | 'serveurs' | 'emballages' | 'livraisons' | 'cloture' | 'rapports' | 'sauvegarde' | 'parametres'
+export type Ecran = 'tableau' | 'vente' | 'catalogue' | 'reception' | 'inventaire' | 'clients' | 'serveurs' | 'emballages' | 'livraisons' | 'cloture' | 'depenses' | 'rapports' | 'sauvegarde' | 'parametres'
 
 export interface InfoEcran { id: Ecran; nom: string; court: string; icone: LucideIcon; description: string; depot?: boolean /* seulement en mode dépôt */ }
 
@@ -10,6 +10,7 @@ export const ECRANS: InfoEcran[] = [
   { id: 'tableau', nom: 'Tableau de bord', court: 'Accueil', icone: LayoutDashboard, description: 'Chiffres du jour, alertes' },
   { id: 'cloture', nom: 'Clôture de caisse', court: 'Clôture', icone: Calculator, description: 'Argent remis par chaque serveur' },
   { id: 'clients', nom: 'Crédits clients', court: 'Crédits', icone: Users, description: 'Ardoises et remboursements' },
+  { id: 'depenses', nom: 'Dépenses', court: 'Dépenses', icone: Wallet, description: 'Loyer, électricité, glace…' },
   { id: 'catalogue', nom: 'Produits', court: 'Produits', icone: BookOpen, description: 'Boissons, prix, casiers' },
   { id: 'reception', nom: 'Réception', court: 'Réception', icone: PackagePlus, description: 'Boissons reçues du fournisseur' },
   { id: 'livraisons', nom: 'Livraisons', court: 'Livraisons', icone: Truck, description: 'Commandes à livrer (dépôt)', depot: true },

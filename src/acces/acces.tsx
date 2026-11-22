@@ -16,7 +16,7 @@ export interface Acces {
 }
 
 // Écrans autorisés pour chaque rôle. Le patron voit tout.
-const ECRANS_GERANT: Ecran[] = ['tableau', 'vente', 'catalogue', 'reception', 'inventaire', 'clients', 'emballages', 'livraisons', 'cloture', 'rapports', 'sauvegarde']
+const ECRANS_GERANT: Ecran[] = ['tableau', 'vente', 'catalogue', 'reception', 'inventaire', 'clients', 'emballages', 'livraisons', 'cloture', 'depenses', 'rapports', 'sauvegarde']
 const ECRANS_SERVEUR: Ecran[] = ['vente']
 
 export function construireAcces(actif: boolean, utilisateur: Utilisateur | null, changerUtilisateur: () => void): Acces {

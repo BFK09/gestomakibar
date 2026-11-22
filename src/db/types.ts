@@ -248,3 +248,15 @@ export interface Livraison {
   livreur?: string
   livreeLe?: string
 }
+
+// Une dépense de fonctionnement (loyer, électricité, glace…). Les achats de boissons n'en font pas partie :
+// ils passent par la réception. Payée avec l'argent d'un serveur, elle est retirée de ses espèces à remettre.
+export interface Depense {
+  id: string
+  date: string // date et heure
+  categorie: string
+  montant: number
+  serveurId?: string // payée avec les espèces de ce serveur (déduite à sa clôture)
+  note?: string
+  saisiPar?: string // nom de la personne connectée qui l'a saisie
+}

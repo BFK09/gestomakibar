@@ -513,3 +513,4 @@ button.lien { background: none; border: none; color: var(--bleu); text-decoratio
 .role-ligne { display: flex; align-items: center; gap: 8px; font-weight: 700; margin: 6px 0; }
 .liste-simple { list-style: none; padding: 0; margin: 8px 0; }
 .liste-simple li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--ligne); }
+.puces.envelopper { flex-wrap: wrap; overflow: visible; margin: 8px 0; }

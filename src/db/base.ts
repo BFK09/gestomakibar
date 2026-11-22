@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type {
-  Achat, Article, Boutique, Categorie, Client, Cloture, Encaissement, Fournisseur, Profil, Inventaire,
+  Achat, Article, Boutique, Categorie, Client, Cloture, Encaissement, Fournisseur, Profil, Depense, Inventaire,
   Emballage, LigneAchat, Livraison, LigneInventaire, LigneVente, ModePaiement, MouvementEmballage, MouvementStock, Serveur, Vente,
 } from './types'
 import { chargerDonneesDeDepart } from './depart'
@@ -28,6 +28,7 @@ export class BaseMakibar extends Dexie {
   mouvementsEmballage!: EntityTable<MouvementEmballage, 'id'>
   livraisons!: EntityTable<Livraison, 'id'>
   profils!: EntityTable<Profil, 'id'>
+  depenses!: EntityTable<Depense, 'id'>
 
   constructor() {
     super('gestomakibar')
@@ -70,6 +71,10 @@ export class BaseMakibar extends Dexie {
     // Version 4 : les profils (patron, gérants) avec code PIN.
     this.version(4).stores({
       profils: 'id, role, nom',
+    })
+
+    this.version(5).stores({
+      depenses: 'id, date, serveurId, categorie',
     })
 
     // "populate" ne s'exécute qu'une fois : à la toute première ouverture.

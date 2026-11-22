@@ -21,6 +21,7 @@ import Navigation from './navigation/Navigation'
 import { definirPays } from './outils/pays'
 import type { Ecran } from './navigation/ecrans'
 import Connexion from './acces/Connexion'
+import Depenses from './depenses/Depenses'
 import { ContexteAcces, construireAcces, type Utilisateur } from './acces/acces'
 
 // Le composant principal : la navigation, puis l'écran choisi.
@@ -73,6 +74,7 @@ function App() {
         {affiche === 'emballages' && <Emballages />}
         {affiche === 'livraisons' && <Livraisons />}
         {affiche === 'cloture' && <Cloture />}
+        {affiche === 'depenses' && <Depenses />}
         {affiche === 'rapports' && <Rapports />}
         {affiche === 'sauvegarde' && <Sauvegarde />}
         {affiche === 'parametres' && <Parametres />}
