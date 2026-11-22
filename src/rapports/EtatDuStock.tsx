@@ -4,12 +4,14 @@ import { db } from '../db/base'
 import { etatStock } from '../db/rapports'
 import { fcfa } from '../outils/format'
 import { BoutonPdf } from './Rapports'
+import { useAcces } from '../acces/acces'
 
 // L'inventaire théorique : ce que l'application pense avoir en stock, produit par produit,
 // avec sa valeur. Imprimé, il sert aussi de feuille de comptage (colonne « Compté » vide).
 export default function EtatDuStock({ nomBoutique }: { nomBoutique: string }) {
   const [categorieId, setCategorieId] = useState('')
   const [feuilleComptage, setFeuilleComptage] = useState(false)
+  const { voitCouts } = useAcces() // sans accès aux coûts : valeurs au prix de vente seulement
   const lignes = useLiveQuery(() => etatStock(), [])
   const categories = useLiveQuery(() => db.categories.orderBy('nom').toArray(), [])
   if (!lignes || !categories) return <p>Chargement…</p>
@@ -47,7 +49,7 @@ export default function EtatDuStock({ nomBoutique }: { nomBoutique: string }) {
           <thead>
             <tr>
               <th>Code</th><th>Produit</th><th className="nombre">Stock</th>
-              {feuilleComptage ? <th className="nombre">Compté</th> : <><th className="nombre">Coût unit.</th><th className="nombre">Valeur</th></>}
+              {feuilleComptage ? <th className="nombre">Compté</th> : voitCouts ? <><th className="nombre">Coût unit.</th><th className="nombre">Valeur</th></> : <><th className="nombre">Prix vente</th><th className="nombre">Valeur</th></>}
             </tr>
           </thead>
           <tbody>
@@ -58,11 +60,18 @@ export default function EtatDuStock({ nomBoutique }: { nomBoutique: string }) {
                 <td className={`nombre ${l.stock < 0 || (l.seuilAlerte !== null && l.stock <= l.seuilAlerte) ? 'alerte' : ''}`}>{l.stock}</td>
                 {feuilleComptage
                   ? <td className="case-vide"></td>
-                  : <><td className="nombre">{fcfa(l.coutMoyen)}</td><td className="nombre">{fcfa(Math.max(l.stock, 0) * (l.coutMoyen ?? 0))}</td></>}
+                  : voitCouts
+                    ? <><td className="nombre">{fcfa(l.coutMoyen)}</td><td className="nombre">{fcfa(Math.max(l.stock, 0) * (l.coutMoyen ?? 0))}</td></>
+                    : <><td className="nombre">{fcfa(l.prixVente)}</td><td className="nombre">{fcfa(Math.max(l.stock, 0) * (l.prixVente ?? 0))}</td></>}
               </tr>
             ))}
           </tbody>
-          {!feuilleComptage && (
+          {!feuilleComptage && !voitCouts && (
+            <tfoot>
+              <tr><td colSpan={2}>Total ({visibles.length} produits)</td><td className="nombre">{totalQuantite}</td><td></td><td className="nombre">{fcfa(valeurVente)}</td></tr>
+            </tfoot>
+          )}
+          {!feuilleComptage && voitCouts && (
             <tfoot>
               <tr><td colSpan={2}>Total ({visibles.length} produits)</td><td className="nombre">{totalQuantite}</td><td></td><td className="nombre">{fcfa(valeurAchat)}</td></tr>
               <tr><td colSpan={4}>Valeur au prix de vente</td><td className="nombre">{fcfa(valeurVente)}</td></tr>

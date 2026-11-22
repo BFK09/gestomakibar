@@ -8,6 +8,7 @@ import { fcfa } from '../outils/format'
 import type { LignePanier } from './Caisse'
 import { ouvrirWhatsApp } from '../outils/whatsapp'
 import { MessageCircle, Printer } from 'lucide-react'
+import { useAcces } from '../acces/acces'
 
 interface Props {
   venteId: string
@@ -22,6 +23,7 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
   const [confirmer, setConfirmer] = useState(false)
   const [retour, setRetour] = useState<Record<string, string> | null>(null) // articleId → quantité tapée
   const [modeRetour, setModeRetour] = useState('')
+  const serveurConnecte = useAcces().role === 'serveur' // un serveur ne peut ni annuler ni faire de retour
   const [erreur, setErreur] = useState('')
   const d = useLiveQuery(async () => {
     const vente = await db.ventes.get(venteId)
@@ -49,7 +51,7 @@ export default function Ticket({ venteId: venteIdDepart, onNouvelleVente, onRefa
   const { livraison, casiers, dusClient, vente, lignes, encaissements, modes, client, serveur, annulePar, original, boutique, retours, dejaRetourne, tousModes } = d
   const estAnnulation = !!vente.annuleVenteId
   const estRetour = !!vente.retourVenteId
-  const peutRetourner = !estAnnulation && !estRetour && !annulePar
+  const peutRetourner = !estAnnulation && !estRetour && !annulePar && !serveurConnecte
   // Modes proposés pour rembourser : tous ceux qui sont actifs ; le crédit seulement s'il y a un client.
   const modesRetour = tousModes.filter((m) => m.actif && (m.nature !== 'credit' || !!vente.clientId))
 

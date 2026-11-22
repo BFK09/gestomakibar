@@ -7,6 +7,7 @@ import { stockParArticle } from '../db/stock'
 import { fcfa, lireEntier } from '../outils/format'
 import { sansAccents } from '../outils/texte'
 import { texteRecherche } from '../outils/codeBarre'
+import { useAcces } from '../acces/acces'
 
 const MOTIFS = ['Casse', 'Vol', 'Abîmé / périmé', 'Usage interne (boutique)', 'Cadeau / don', 'Autre']
 
@@ -19,6 +20,7 @@ export default function Pertes() {
   const [precision, setPrecision] = useState('')
   const [erreur, setErreur] = useState('')
   const [message, setMessage] = useState('')
+  const { voitCouts } = useAcces() // la valeur au coût d'achat est réservée au patron
 
   const articles = useLiveQuery(() => db.articles.orderBy('code').filter((a) => a.actif).toArray(), [])
   const stocks = useLiveQuery(() => stockParArticle(), [])
@@ -79,7 +81,7 @@ export default function Pertes() {
           </label>
         </div>
         <label>Précision (facultatif)<input value={precision} onChange={(e) => setPrecision(e.target.value)} placeholder="ex. tombé pendant le rangement" /></label>
-        {valeur > 0 && <p className="info">Valeur perdue (au coût d'achat) : <strong>{fcfa(valeur)}</strong></p>}
+        {voitCouts && valeur > 0 && <p className="info">Valeur perdue (au coût d'achat) : <strong>{fcfa(valeur)}</strong></p>}
         <div className="boutons gauche"><button className="principal" onClick={enregistrer}>Enregistrer la perte</button></div>
       </div>
 
@@ -93,13 +95,13 @@ export default function Pertes() {
                   <td>{new Date(m.date).toLocaleDateString('fr-FR')}</td>
                   <td>{m.article?.designation}<br /><small>{m.motif}</small></td>
                   <td>{-m.quantite}</td>
-                  <td>{fcfa(-m.quantite * (m.article?.coutMoyen ?? 0))}</td>
+                  {voitCouts && <td>{fcfa(-m.quantite * (m.article?.coutMoyen ?? 0))}</td>}
                 </tr>
               ))}
             </tbody>
           </table>
         )}
-        {totalMois > 0 && <p className="info">Total perdu sur 30 jours : <strong>{fcfa(totalMois)}</strong></p>}
+        {voitCouts && totalMois > 0 && <p className="info">Total perdu sur 30 jours : <strong>{fcfa(totalMois)}</strong></p>}
       </div>
     </div>
   )

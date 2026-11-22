@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/base'
+import { useAcces } from '../acces/acces'
 import { lireSauvegarde, restaurerBase, telechargerSauvegarde, type FichierSauvegarde } from '../db/sauvegarde'
 
 // Écran Sauvegarde : enregistrer toute la base dans un fichier, ou la recharger depuis un fichier.
 export default function Sauvegarde() {
   const [message, setMessage] = useState('')
+  const { peutRestaurer } = useAcces() // seul le patron peut remplacer les données
   const [erreur, setErreur] = useState('')
   const [aRestaurer, setARestaurer] = useState<FichierSauvegarde | null>(null)
   const [dernierFichier, setDernierFichier] = useState<File | null>(null)
@@ -80,7 +82,9 @@ export default function Sauvegarde() {
         </div>
       </div>
 
-      <div className="carte">
+      {!peutRestaurer ? (
+        <p className="info">Seul le patron peut restaurer une sauvegarde (remplacer les données).</p>
+      ) : <div className="carte">
         <strong>Restaurer</strong>
         <p className="info">Recharge un fichier de sauvegarde, par exemple sur un nouveau téléphone. Les données actuelles seront remplacées.</p>
         <input ref={choixFichier} type="file" accept=".json,application/json" onChange={choisir} hidden />
@@ -104,7 +108,7 @@ export default function Sauvegarde() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
     </section>
   )
 }

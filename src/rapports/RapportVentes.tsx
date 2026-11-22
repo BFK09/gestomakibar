@@ -5,6 +5,8 @@ import { rapportVentes, type LigneRapportVente } from '../db/rapports'
 import { fcfa } from '../outils/format'
 import { sansAccents } from '../outils/texte'
 import { BoutonPdf } from './Rapports'
+import type { Cellule } from '../outils/excel'
+import { useAcces } from '../acces/acces'
 import { bornesPeriode, jourLocal, libellePeriode, NOMS_PERIODES, type Periode } from './periodes'
 
 type Regroupement = 'article' | 'categorie' | 'serveur' | 'jour' | 'detail'
@@ -24,6 +26,7 @@ const NATURES = { vente: 'Vente', annulation: 'Annulation', retour: 'Retour' }
 // Rapport des ventes : chiffre d'affaires, coût et marge, regroupés comme on veut, en PDF ou Excel.
 export default function RapportVentes({ nomBoutique }: { nomBoutique: string }) {
   const [periode, setPeriode] = useState<Periode>('mois')
+  const { voitCouts } = useAcces() // le gérant ne voit ni coût ni marge
   const [du, setDu] = useState(jourLocal())
   const [au, setAu] = useState(jourLocal())
   const [regroupement, setRegroupement] = useState<Regroupement>('article')
@@ -70,30 +73,33 @@ export default function RapportVentes({ nomBoutique }: { nomBoutique: string }) 
     texte && `recherche : « ${recherche.trim()} »`,
   ].filter(Boolean).join(' · ')
 
+  // Sans accès aux coûts, on ne garde que les n premières colonnes (avant Coût et Marge).
+  const sansCouts = (n: number, lignes: Cellule[][]) => (voitCouts ? lignes : lignes.map((l) => l.slice(0, n)))
+
   async function exporterExcel() {
     const { fichierExcel, telechargerFichier } = await import('../outils/excel')
     const entete = [[nomBoutique], [`Rapport des ventes, ${libellePeriode(periode, du, au)}${filtres ? ` (${filtres})` : ''}`], []]
     const synthese = regroupement === 'detail' ? [] : [{
       nom: NOMS_REGROUPEMENTS[regroupement],
       largeurs: [40, 12, 16, 16, 16, 10],
-      lignes: [
+      lignes: sansCouts(3, [
         ...entete,
         [regroupement === 'article' ? 'Produit' : regroupement === 'categorie' ? 'Catégorie' : regroupement === 'serveur' ? 'Serveur' : 'Jour', 'Quantité', "Chiffre d'affaires", 'Coût', 'Marge', 'Marge %'],
         ...liste.map((g) => [g.libelle, g.quantite, g.montant, g.cout, g.montant - g.cout, g.montant ? Math.round(((g.montant - g.cout) / g.montant) * 1000) / 10 : null]),
         ['TOTAL', total.quantite, total.montant, total.cout, total.montant - total.cout, total.montant ? Math.round(((total.montant - total.cout) / total.montant) * 1000) / 10 : null],
-      ],
+      ]),
     }]
     const detail = {
       nom: 'Détail',
       largeurs: [12, 7, 10, 12, 12, 34, 22, 10, 14, 14, 14],
-      lignes: [
+      lignes: sansCouts(9, [
         ...entete,
         ['Date', 'Heure', 'Ticket', 'Nature', 'Code', 'Désignation', 'Catégorie', 'Quantité', 'Montant', 'Coût', 'Marge'],
         ...lignes.map((l) => {
           const d = new Date(l.date)
           return [d.toLocaleDateString('fr-FR'), d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), l.numero, NATURES[l.nature], l.code, l.designation, nomCategorie.get(l.categorieId) ?? '', l.quantite, l.montant, l.cout, l.montant - l.cout]
         }),
-      ],
+      ]),
     }
     const blob = fichierExcel([...synthese, detail], 3)
     telechargerFichier(blob, `ventes-${debut.slice(0, 10)}-au-${jourLocal(new Date(new Date(fin).getTime() - 1))}.xlsx`)
@@ -136,7 +142,7 @@ export default function RapportVentes({ nomBoutique }: { nomBoutique: string }) 
 
       <div className="resume-ventes">
         <div><small>Chiffre d'affaires</small><strong>{fcfa(total.montant)}</strong></div>
-        <div><small>Marge</small><strong>{fcfa(total.montant - total.cout)}</strong><small>{pourcent(total.montant - total.cout, total.montant)}</small></div>
+        {voitCouts && <div><small>Marge</small><strong>{fcfa(total.montant - total.cout)}</strong><small>{pourcent(total.montant - total.cout, total.montant)}</small></div>}
         <div><small>Tickets</small><strong>{r.tickets}</strong></div>
         {rendus !== 0 && <div><small>Retours et annulations</small><strong>{fcfa(rendus)}</strong></div>}
         {!categorieId && !texte && r.parMode.map((m) => <div key={m.nom}><small>{m.nom}</small><strong>{fcfa(m.montant)}</strong></div>)}
@@ -147,7 +153,7 @@ export default function RapportVentes({ nomBoutique }: { nomBoutique: string }) 
       ) : regroupement === 'detail' ? (
         <div className="table-defilante">
           <table className="table-rapport">
-            <thead><tr><th>Date</th><th>Ticket</th><th>Produit</th><th className="nombre">Qté</th><th className="nombre">Montant</th><th className="nombre">Marge</th></tr></thead>
+            <thead><tr><th>Date</th><th>Ticket</th><th>Produit</th><th className="nombre">Qté</th><th className="nombre">Montant</th>{voitCouts && <th className="nombre">Marge</th>}</tr></thead>
             <tbody>
               {lignes.map((l) => (
                 <tr key={l.id} className={l.nature !== 'vente' ? 'ligne-retour' : ''}>
@@ -156,35 +162,37 @@ export default function RapportVentes({ nomBoutique }: { nomBoutique: string }) 
                   <td><span className="code">{l.code}</span> {l.designation}</td>
                   <td className="nombre">{l.quantite}</td>
                   <td className="nombre">{fcfa(l.montant)}</td>
-                  <td className="nombre">{fcfa(l.montant - l.cout)}</td>
+                  {voitCouts && <td className="nombre">{fcfa(l.montant - l.cout)}</td>}
                 </tr>
               ))}
             </tbody>
-            <tfoot><tr><td colSpan={3}>Total ({lignes.length} ligne{lignes.length > 1 ? 's' : ''})</td><td className="nombre">{total.quantite}</td><td className="nombre">{fcfa(total.montant)}</td><td className="nombre">{fcfa(total.montant - total.cout)}</td></tr></tfoot>
+            <tfoot><tr><td colSpan={3}>Total ({lignes.length} ligne{lignes.length > 1 ? 's' : ''})</td><td className="nombre">{total.quantite}</td><td className="nombre">{fcfa(total.montant)}</td>{voitCouts && <td className="nombre">{fcfa(total.montant - total.cout)}</td>}</tr></tfoot>
           </table>
         </div>
       ) : (
         <div className="table-defilante">
           <table className="table-rapport">
-            <thead><tr><th>{regroupement === 'article' ? 'Produit' : regroupement === 'categorie' ? 'Catégorie' : regroupement === 'serveur' ? 'Serveur' : 'Jour'}</th><th className="nombre">Qté</th><th className="nombre">Chiffre d'affaires</th><th className="nombre">Coût</th><th className="nombre">Marge</th><th className="nombre">%</th></tr></thead>
+            <thead><tr><th>{regroupement === 'article' ? 'Produit' : regroupement === 'categorie' ? 'Catégorie' : regroupement === 'serveur' ? 'Serveur' : 'Jour'}</th><th className="nombre">Qté</th><th className="nombre">Chiffre d'affaires</th>{voitCouts && <><th className="nombre">Coût</th><th className="nombre">Marge</th><th className="nombre">%</th></>}</tr></thead>
             <tbody>
               {liste.map((g) => (
                 <tr key={g.cle}>
                   <td>{g.libelle}</td>
                   <td className="nombre">{g.quantite}</td>
                   <td className="nombre">{fcfa(g.montant)}</td>
-                  <td className="nombre">{fcfa(g.cout)}</td>
-                  <td className="nombre">{fcfa(g.montant - g.cout)}</td>
-                  <td className="nombre">{pourcent(g.montant - g.cout, g.montant)}</td>
+                  {voitCouts && <>
+                    <td className="nombre">{fcfa(g.cout)}</td>
+                    <td className="nombre">{fcfa(g.montant - g.cout)}</td>
+                    <td className="nombre">{pourcent(g.montant - g.cout, g.montant)}</td>
+                  </>}
                 </tr>
               ))}
             </tbody>
-            <tfoot><tr><td>Total</td><td className="nombre">{total.quantite}</td><td className="nombre">{fcfa(total.montant)}</td><td className="nombre">{fcfa(total.cout)}</td><td className="nombre">{fcfa(total.montant - total.cout)}</td><td className="nombre">{pourcent(total.montant - total.cout, total.montant)}</td></tr></tfoot>
+            <tfoot><tr><td>Total</td><td className="nombre">{total.quantite}</td><td className="nombre">{fcfa(total.montant)}</td>{voitCouts && <><td className="nombre">{fcfa(total.cout)}</td><td className="nombre">{fcfa(total.montant - total.cout)}</td><td className="nombre">{pourcent(total.montant - total.cout, total.montant)}</td></>}</tr></tfoot>
           </table>
         </div>
       )}
 
-      <p className="info">La marge = prix de vente − coût moyen d'achat au moment de la vente. Un produit vendu sans prix d'achat connu compte avec un coût de 0.</p>
+      {voitCouts && <p className="info">La marge = prix de vente − coût moyen d'achat au moment de la vente. Un produit vendu sans prix d'achat connu compte avec un coût de 0.</p>}
       <div className="boutons gauche">
         <BoutonPdf />
         <button className="sans-impression" onClick={exporterExcel} disabled={lignes.length === 0}>Télécharger en Excel</button>

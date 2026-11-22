@@ -24,12 +24,29 @@ export interface Boutique {
   garderServeur?: boolean
   // Vente en gros aux revendeurs (prix de gros, vente au casier, livraisons). Toujours actif pour un dépôt.
   venteEnGros?: boolean
+  // Profils avec code PIN (patron, gérants, serveurs). Vide ou false : pas de connexion, tout est visible, comme avant.
+  profilsActifs?: boolean
+  // Verrouillage automatique après ce nombre de minutes sans toucher l'écran (0 = jamais). Vide = 10.
+  verrouMinutes?: number
 }
 
 // Le mode dépôt (gros, casiers, livraisons) est-il actif ?
 export const modeDepot = (b?: Pick<Boutique, 'type' | 'venteEnGros'>) => b?.type === 'depot' || !!b?.venteEnGros
 
 // Un serveur ou une serveuse. Chaque vente indique qui l'a faite, pour la clôture de caisse.
+// Un profil de direction : le patron (un seul) ou un gérant. Le PIN n'est jamais gardé en clair :
+// on garde son empreinte (SHA-256 avec un sel propre au profil).
+export type RoleProfil = 'patron' | 'gerant'
+export interface Profil {
+  id: string
+  nom: string
+  role: RoleProfil
+  sel: string
+  pinHash: string
+  secoursHash?: string // patron seulement : empreinte de la phrase de secours (PIN oublié)
+  actif: boolean
+}
+
 export interface Serveur {
   id: string
   nom: string

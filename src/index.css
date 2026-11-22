@@ -494,3 +494,22 @@ input, select, textarea { border-radius: 12px !important; }
 .mise-a-jour { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 
 .tuile-boisson-format { font-size: 0.78rem; font-weight: 700; color: var(--doux); margin-top: -4px; }
+
+/* ---------- Profils : connexion et utilisateur connecté ---------- */
+.changer-utilisateur { margin-left: auto; display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.14); color: #fff; border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 999px; padding: 4px 10px 4px 12px; min-height: 36px; }
+.changer-utilisateur span { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; font-size: 0.85rem; font-weight: 700; max-width: 9rem; overflow: hidden; }
+.changer-utilisateur small { font-size: 0.7rem; font-weight: 600; opacity: 0.85; }
+.connexion { min-height: 100vh; min-height: 100dvh; box-sizing: border-box; padding: max(32px, env(safe-area-inset-top)) 16px 32px; display: flex; flex-direction: column; align-items: center; gap: 14px; background: #1f0f07; color: #fbf6f0; }
+.connexion h1 { margin: 0; font-size: 1.4rem; color: #f5b041; text-align: center; }
+.connexion .logo-connexion { width: 88px; height: 88px; border-radius: 22px; }
+.connexion .info { color: #e8d6c6; }
+.connexion .grille-serveurs { width: 100%; max-width: 520px; }
+.connexion .grille-serveurs button { background: #2b1a10; color: #fbf6f0; border-color: #4a2e1c; }
+.connexion .grille-serveurs button small { font-weight: 600; opacity: 0.75; font-size: 0.75rem; }
+.connexion .grille-serveurs svg { color: #f5b041; }
+.connexion .carte { width: 100%; max-width: 420px; color: var(--texte); }
+button.lien { background: none; border: none; color: var(--bleu); text-decoration: underline; padding: 6px; min-height: auto; box-shadow: none; }
+.role-tag { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--bleu-pale); color: var(--bleu); margin-left: 6px; }
+.role-ligne { display: flex; align-items: center; gap: 8px; font-weight: 700; margin: 6px 0; }
+.liste-simple { list-style: none; padding: 0; margin: 8px 0; }
+.liste-simple li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--ligne); }

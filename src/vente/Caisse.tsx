@@ -11,6 +11,7 @@ import ScanCamera from '../scan/ScanCamera'
 import { ScanBarcode } from 'lucide-react'
 import Ticket from './Ticket'
 import ChoixServeur from './ChoixServeur'
+import { useAcces } from '../acces/acces'
 import TuilesProduits from './TuilesProduits'
 
 export interface LignePanier { article: Article; quantite: number }
@@ -26,7 +27,10 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
   // Le serveur qui encaisse. L'appareil du comptoir est partagé : après chaque vente,
   // on redemande qui encaisse, pour que chaque vente soit au bon nom (sauf si l'option
   // « garder le même serveur » est activée dans l'écran Serveurs).
-  const [serveur, setServeur] = useState<Serveur | null>(null)
+  const [serveurChoisi, setServeur] = useState<Serveur | null>(null)
+  // Profils activés et un serveur connecté : il encaisse toujours à son propre nom.
+  const acces = useAcces()
+  const serveurConnecte = acces.role === 'serveur'
   const [table, setTable] = useState('')
   const [recherche, setRecherche] = useState('')
   const [scan, setScan] = useState(false)
@@ -52,6 +56,7 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
   const boutique = useLiveQuery(() => db.boutique.get('principale'), [])
   const emballages = useLiveQuery(() => db.emballages.filter((e) => e.actif).toArray(), [])
   if (!emballages || !articles || !modes || !clients || !stocks || !serveurs || !categories) return null
+  const serveur = serveurConnecte ? (serveurs.find((x) => x.id === acces.utilisateur!.id) ?? null) : serveurChoisi
 
   // Après une vente : on affiche le ticket, puis on repart sur un panier vide.
   if (ticketId) return <Ticket venteId={ticketId} onNouvelleVente={() => setTicketId(null)} onRefaire={onRefaire} />
@@ -173,7 +178,7 @@ export default function Caisse({ panierDepart, onRefaire, onAllerAuxServeurs }: 
     <div className="caisse">
       <div className="bandeau-serveur">
         <span>Serveur : <strong>{serveur.nom}</strong></span>
-        <button type="button" onClick={() => setServeur(null)}>Changer</button>
+        {!serveurConnecte && <button type="button" onClick={() => setServeur(null)}>Changer</button>}
       </div>
 
       <TuilesProduits

@@ -4,19 +4,24 @@ import { db } from '../db/base'
 import { fcfa } from '../outils/format'
 import Ticket from './Ticket'
 import type { LignePanier } from './Caisse'
+import { useAcces } from '../acces/acces'
 
 // Les tickets d'aujourd'hui, avec le total par mode de paiement.
 export default function VentesDuJour({ onRefaire }: { onRefaire: (lignes: LignePanier[]) => void }) {
   const [ouvert, setOuvert] = useState<string | null>(null)
+  // Un serveur connecté ne voit que ses propres tickets.
+  const acces = useAcces()
+  const seulServeur = acces.role === 'serveur' ? acces.utilisateur!.id : null
   const d = useLiveQuery(async () => {
     const debut = new Date(); debut.setHours(0, 0, 0, 0)
     const depuis = debut.toISOString()
-    const ventes = await db.ventes.where('date').aboveOrEqual(depuis).reverse().sortBy('date')
-    const encaissements = await db.encaissements.where('date').aboveOrEqual(depuis).toArray()
+    const ventes = (await db.ventes.where('date').aboveOrEqual(depuis).reverse().sortBy('date')).filter((v) => !seulServeur || v.serveurId === seulServeur)
+    const ids = new Set(ventes.map((v) => v.id))
+    const encaissements = (await db.encaissements.where('date').aboveOrEqual(depuis).toArray()).filter((e) => !seulServeur || (e.venteId ? ids.has(e.venteId) : e.serveurId === seulServeur))
     const modes = await db.modesPaiement.toCollection().sortBy('ordre')
     const serveurs = new Map((await db.serveurs.toArray()).map((x) => [x.id, x.nom]))
     return { ventes, encaissements, modes, serveurs }
-  }, [])
+  }, [seulServeur])
   if (!d) return <p>Chargement…</p>
   if (ouvert) return (
     <div>

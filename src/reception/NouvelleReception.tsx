@@ -8,6 +8,7 @@ import { monnaie } from '../outils/pays'
 import { articleScanne, texteRecherche } from '../outils/codeBarre'
 import ScanCamera from '../scan/ScanCamera'
 import { ScanBarcode } from 'lucide-react'
+import { useAcces } from '../acces/acces'
 
 // Une ligne en cours de saisie (les nombres restent du texte jusqu'à l'enregistrement).
 // Pour une boisson vendue en casier (tailleCasier rempli), on saisit les casiers et le prix du casier,
@@ -46,6 +47,7 @@ export default function NouvelleReception() {
   const [lignes, setLignes] = useState<LigneSaisie[]>([])
   const [erreurs, setErreurs] = useState<string[]>([])
   const [message, setMessage] = useState('')
+  const { voitCouts } = useAcces()
   const [vides, setVides] = useState<Record<string, string>>({}) // emballageId → casiers vides rendus
 
   const fournisseurs = useLiveQuery(() => db.fournisseurs.orderBy('nom').toArray(), [])
@@ -70,10 +72,11 @@ export default function NouvelleReception() {
         : { ...l, quantite: String((lireEntier(l.quantite) || 0) + 1) }
       setLignes(copie)
     } else {
-      // Le coût est pré-rempli avec le dernier coût moyen connu.
+      // Le coût est pré-rempli avec le dernier coût moyen connu (sauf pour le gérant, qui tape le prix de la facture).
+      const cm = voitCouts ? a.coutMoyen : null
       setLignes([...lignes, {
-        article: a, quantite: '1', cout: a.coutMoyen?.toString() ?? '',
-        casiers: '1', bouteilles: '', prixCasier: a.coutMoyen && a.tailleCasier ? String(a.coutMoyen * a.tailleCasier) : '',
+        article: a, quantite: '1', cout: cm?.toString() ?? '',
+        casiers: '1', bouteilles: '', prixCasier: cm && a.tailleCasier ? String(cm * a.tailleCasier) : '',
         prixVente: '',
       }])
     }

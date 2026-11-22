@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Menu, X } from 'lucide-react'
+import { LogOut, Menu, X } from 'lucide-react'
+import { useAcces } from '../acces/acces'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/base'
 import { modeDepot } from '../db/types'
@@ -22,7 +23,11 @@ export default function Navigation({ nomBoutique, ecran, onChoisir }: Props) {
   const dansPlus = !PRINCIPAUX.includes(ecran)
   const actuel = infoEcran(ecran)
   const boutique = useLiveQuery(() => db.boutique.get('principale'), [])
-  const ecrans = ECRANS.filter((e) => !e.depot || modeDepot(boutique))
+  const acces = useAcces()
+  const ecrans = ECRANS.filter((e) => (!e.depot || modeDepot(boutique)) && acces.peutEcran(e.id))
+  const principaux = PRINCIPAUX.filter((id) => acces.peutEcran(id))
+  const avecPlus = ecrans.some((e) => !principaux.includes(e.id))
+  const ROLES = { patron: 'Patron', gerant: 'Gérant', serveur: 'Serveur' }
 
   // Fermer le panneau « Plus » avec Échap.
   useEffect(() => {
@@ -40,6 +45,12 @@ export default function Navigation({ nomBoutique, ecran, onChoisir }: Props) {
           <strong>{nomBoutique}</strong>
           <small>{actuel.nom}</small>
         </div>
+        {acces.actif && acces.utilisateur && (
+          <button className="changer-utilisateur" onClick={acces.changerUtilisateur} title="Changer d'utilisateur">
+            <span>{acces.utilisateur.nom}<small>{ROLES[acces.utilisateur.role]}</small></span>
+            <LogOut size={18} />
+          </button>
+        )}
       </header>
 
       {/* Ordinateur : menu à gauche */}
@@ -54,8 +65,8 @@ export default function Navigation({ nomBoutique, ecran, onChoisir }: Props) {
       </nav>
 
       {/* Téléphone : barre d'onglets en bas */}
-      <nav className="menu-bas" aria-label="Menu">
-        {PRINCIPAUX.map((id) => {
+      <nav className="menu-bas" aria-label="Menu" style={{ gridTemplateColumns: `repeat(${principaux.length + (avecPlus ? 1 : 0)}, 1fr)` }}>
+        {principaux.map((id) => {
           const e = infoEcran(id)
           return (
             <button key={id} className={`${ecran === id ? 'actif' : ''}${id === 'vente' ? ' centre' : ''}`} aria-current={ecran === id ? 'page' : undefined} onClick={() => choisir(id)}>
@@ -64,10 +75,12 @@ export default function Navigation({ nomBoutique, ecran, onChoisir }: Props) {
             </button>
           )
         })}
-        <button className={dansPlus || plusOuvert ? 'actif' : ''} onClick={() => setPlusOuvert(!plusOuvert)} aria-expanded={plusOuvert}>
-          <span className="pastille">{dansPlus ? <actuel.icone size={22} strokeWidth={2.4} /> : <Menu size={22} strokeWidth={1.9} />}</span>
-          <span>Plus</span>
-        </button>
+        {avecPlus && (
+          <button className={dansPlus || plusOuvert ? 'actif' : ''} onClick={() => setPlusOuvert(!plusOuvert)} aria-expanded={plusOuvert}>
+            <span className="pastille">{dansPlus ? <actuel.icone size={22} strokeWidth={2.4} /> : <Menu size={22} strokeWidth={1.9} />}</span>
+            <span>Plus</span>
+          </button>
+        )}
       </nav>
 
       {plusOuvert && (

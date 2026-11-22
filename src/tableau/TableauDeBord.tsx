@@ -4,6 +4,7 @@ import { etatDuStock, resumePeriode, ventesSeptJours } from '../db/statistiques'
 import { fcfa } from '../outils/format'
 import { bilansJournee, debutJournee } from '../db/cloture'
 import { bornesJournee, journeeDe } from '../db/journee'
+import { useAcces } from '../acces/acces'
 
 type Periode = 'jour' | 'semaine' | 'mois'
 const NOMS: Record<Periode, string> = { jour: "Aujourd'hui", semaine: '7 derniers jours', mois: 'Ce mois-ci' }
@@ -21,6 +22,7 @@ function bornes(p: Periode, heure: number) {
 
 export default function TableauDeBord({ onVoirCatalogue }: { onVoirCatalogue: () => void }) {
   const [periode, setPeriode] = useState<Periode>('jour')
+  const { voitCouts } = useAcces()
   const resume = useLiveQuery(async () => resumePeriode(...bornes(periode, await debutJournee())), [periode])
   const jours = useLiveQuery(async () => ventesSeptJours(await debutJournee()), [])
   const stock = useLiveQuery(() => etatDuStock(), [])
@@ -43,7 +45,7 @@ export default function TableauDeBord({ onVoirCatalogue }: { onVoirCatalogue: ()
 
       <div className="tuiles">
         <div className="tuile"><small>Chiffre d'affaires</small><strong>{fcfa(resume.chiffreAffaires)}</strong></div>
-        <div className="tuile"><small>Marge</small><strong>{fcfa(resume.marge)}</strong><small>{tauxMarge} % des ventes</small></div>
+        {voitCouts && <div className="tuile"><small>Marge</small><strong>{fcfa(resume.marge)}</strong><small>{tauxMarge} % des ventes</small></div>}
         <div className="tuile"><small>Tickets</small><strong>{resume.tickets}</strong></div>
         <div className="tuile"><small>Panier moyen</small><strong>{fcfa(resume.panierMoyen)}</strong></div>
       </div>
@@ -139,7 +141,7 @@ export default function TableauDeBord({ onVoirCatalogue }: { onVoirCatalogue: ()
             <button className="lien-bouton" onClick={onVoirCatalogue}>Régler les seuils dans Produits</button>
           </p>
         )}
-        <p className="info">Valeur du stock (au prix d'achat) : <strong>{fcfa(stock.valeurAchat)}</strong></p>
+        {voitCouts && <p className="info">Valeur du stock (au prix d'achat) : <strong>{fcfa(stock.valeurAchat)}</strong></p>}
       </div>
     </section>
   )

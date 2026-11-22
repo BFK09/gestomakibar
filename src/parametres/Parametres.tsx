@@ -4,11 +4,12 @@ import ListeSimple from './ListeSimple'
 import ModesPaiement from './ModesPaiement'
 import Reinitialiser from './Reinitialiser'
 import Affichage from './Affichage'
+import Profils from './Profils'
 import { db, nouvelId } from '../db/base'
 
-type Section = 'identite' | 'affichage' | 'categories' | 'modes' | 'fournisseurs' | 'reinitialiser'
+type Section = 'identite' | 'profils' | 'affichage' | 'categories' | 'modes' | 'fournisseurs' | 'reinitialiser'
 const NOMS: Record<Section, string> = {
-  identite: 'Établissement', affichage: 'Affichage', categories: 'Catégories', modes: 'Modes de paiement', fournisseurs: 'Fournisseurs', reinitialiser: 'Réinitialiser',
+  identite: 'Établissement', profils: 'Profils', affichage: 'Affichage', categories: 'Catégories', modes: 'Modes de paiement', fournisseurs: 'Fournisseurs', reinitialiser: 'Réinitialiser',
 }
 
 // Écran Paramètres : tout ce qu'on règle une fois et qu'on modifie rarement.
@@ -23,6 +24,7 @@ export default function Parametres() {
         ))}
       </div>
       {section === 'identite' && <Identite />}
+      {section === 'profils' && <Profils />}
       {section === 'affichage' && <Affichage />}
       {section === 'categories' && (
         <ListeSimple

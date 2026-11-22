@@ -8,6 +8,7 @@ import { monnaie } from '../outils/pays'
 import { codeSuivant } from './codeSuivant'
 import ScanCamera from '../scan/ScanCamera'
 import { ScanBarcode } from 'lucide-react'
+import { useAcces } from '../acces/acces'
 
 interface Props {
   articleId: string // un id existant, ou 'nouveau'
@@ -42,6 +43,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
   const emballages = useLiveQuery(() => db.emballages.orderBy('nom').toArray(), [])
   const boutique = useLiveQuery(() => db.boutique.get('principale'), [])
   const [article, setArticle] = useState<Article | null>(null)
+  const { voitCouts } = useAcces()
   const [saisie, setSaisie] = useState<Saisie | null>(null)
   const [erreurs, setErreurs] = useState<string[]>([])
   const [codeModifieALaMain, setCodeModifieALaMain] = useState(false)
@@ -241,7 +243,7 @@ export default function FicheArticle({ articleId, onFermer }: Props) {
           </label>
         )}
 
-        {!estNouveau && (
+        {!estNouveau && voitCouts && (
           <p className="info">
             Coût moyen : {fcfa(article?.coutMoyen)} (calculé automatiquement à chaque réception de marchandise)
           </p>
